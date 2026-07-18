@@ -294,13 +294,159 @@ function NotificationsPanel({notifs, onClose, onMarkRead, onMarkAllRead}){
   );
 }
 
+// ── Admin language support (English / Arabic) ───────────────
+const TRANSLATIONS={
+  overview:{en:"Overview",ar:"نظرة عامة"},
+  tenants:{en:"Tenants",ar:"المستأجرين"},
+  payments:{en:"Payments",ar:"الدفعات"},
+  fleet:{en:"Fleet",ar:"الأسطول"},
+  adminPanel:{en:"Admin Panel",ar:"لوحة التحكم"},
+  add:{en:"Add",ar:"إضافة"},
+  save:{en:"Save",ar:"حفظ"},
+  cancel:{en:"Cancel",ar:"إلغاء"},
+  delete:{en:"Delete",ar:"حذف"},
+  back:{en:"Back",ar:"رجوع"},
+  markPaid:{en:"Mark Paid",ar:"تعليم كمدفوع"},
+  totalCollected:{en:"Total Collected",ar:"إجمالي المحصّل"},
+  pendingPayments:{en:"Pending Payments",ar:"دفعات معلّقة"},
+  availableTrailers:{en:"Available Trailers",ar:"التريلرات المتاحة"},
+  leaseProgress:{en:"Lease Progress",ar:"تقدّم الإيجار"},
+  recentPayments:{en:"Recent Payments",ar:"آخر الدفعات"},
+  addTenant:{en:"Add Tenant",ar:"إضافة مستأجر"},
+  bookingRequests:{en:"Booking Requests",ar:"طلبات الحجز"},
+  contract:{en:"Contract",ar:"العقد"},
+  securityDeposit:{en:"Security Deposit",ar:"وديعة التأمين"},
+  markReceived:{en:"Mark as Received",ar:"تعليم كمستلَم"},
+  monthsPaid:{en:"Months Paid",ar:"الأشهر المدفوعة"},
+  monthsRemaining:{en:"Months Remaining",ar:"الأشهر المتبقية"},
+  maintenanceRequests:{en:"Maintenance Requests",ar:"طلبات الصيانة"},
+  transportRequests:{en:"Transport Requests",ar:"طلبات النقل"},
+  approve:{en:"Approve",ar:"موافقة"},
+  decline:{en:"Decline",ar:"رفض"},
+  sendQuote:{en:"Send Price Quote",ar:"إرسال عرض سعر"},
+  addTrailer:{en:"Add to Fleet",ar:"إضافة للأسطول"},
+  deleteTrailer:{en:"Delete Trailer",ar:"حذف التريلر"},
+  addPhoto:{en:"Add Trailer Photo",ar:"إضافة صورة"},
+  changePhoto:{en:"Change Photo",ar:"تغيير الصورة"},
+  notifications:{en:"Notifications",ar:"الإشعارات"},
+  markAllRead:{en:"Mark all as read",ar:"تعليم الكل كمقروء"},
+  refreshed:{en:"Refreshed",ar:"تم التحديث"},
+  all:{en:"All",ar:"الكل"},
+  available:{en:"Available",ar:"متاح"},
+  rented:{en:"Rented",ar:"مؤجَّر"},
+  "rent-to-own":{en:"Rent-to-Own",ar:"تملّك بالإيجار"},
+  maintenance:{en:"Maintenance",ar:"صيانة"},
+  pending:{en:"Pending",ar:"قيد الانتظار"},
+  "not-available":{en:"Not Available",ar:"غير متاح"},
+  sold:{en:"Sold",ar:"مباع"},
+};
+function t(key,lang){ return TRANSLATIONS[key]?.[lang] ?? TRANSLATIONS[key]?.en ?? key; }
+
+// ── Tenant-facing languages ──────────────────────────────────
+const LANGUAGES=[
+  {code:"en",label:"English"},
+  {code:"es",label:"Español"},
+  {code:"hi",label:"हिन्दी"},
+  {code:"ar",label:"العربية"},
+  {code:"zh",label:"中文"},
+  {code:"th",label:"ไทย"},
+  {code:"de",label:"Deutsch"},
+  {code:"ru",label:"Русский"},
+  {code:"tr",label:"Türkçe"},
+  {code:"ja",label:"日本語"},
+];
+const RTL_LANGS=["ar"];
+
+Object.assign(TRANSLATIONS,{
+  // ── nav / login ──
+  home:{en:"Home",es:"Inicio",hi:"होम",ar:"الرئيسية",zh:"首页",th:"หน้าแรก",de:"Start",ru:"Главная",tr:"Ana Sayfa",ja:"ホーム"},
+  tenantPortal:{en:"Tenant Portal",es:"Portal del Inquilino",hi:"किरायेदार पोर्टल",ar:"بوابة المستأجر",zh:"租户门户",th:"พอร์ทัลผู้เช่า",de:"Mieterportal",ru:"Портал арендатора",tr:"Kiracı Portalı",ja:"テナントポータル"},
+  phoneOrEmail:{en:"Phone or Email",es:"Teléfono o Correo",hi:"फ़ोन या ईमेल",ar:"الهاتف أو البريد الإلكتروني",zh:"电话或邮箱",th:"โทรศัพท์หรืออีเมล",de:"Telefon oder E-Mail",ru:"Телефон или Email",tr:"Telefon veya E-posta",ja:"電話またはメール"},
+  pin4digit:{en:"4-digit PIN",es:"PIN de 4 dígitos",hi:"4-अंकीय पिन",ar:"رمز مكون من ٤ أرقام",zh:"4位密码",th:"รหัส PIN 4 หลัก",de:"4-stellige PIN",ru:"4-значный PIN",tr:"4 haneli PIN",ja:"4桁のPIN"},
+  signIn:{en:"Sign In",es:"Iniciar Sesión",hi:"साइन इन करें",ar:"تسجيل الدخول",zh:"登录",th:"เข้าสู่ระบบ",de:"Anmelden",ru:"Войти",tr:"Giriş Yap",ja:"サインイン"},
+  troubleLogin:{en:"Trouble logging in? Contact Abu Arab directly.",es:"¿Problemas para iniciar sesión? Contacta a Abu Arab directamente.",hi:"लॉगिन करने में समस्या? सीधे अबू अरब से संपर्क करें।",ar:"مشكلة بتسجيل الدخول؟ تواصل مع أبو عرب مباشرة.",zh:"登录遇到问题？请直接联系Abu Arab。",th:"เข้าสู่ระบบไม่ได้? ติดต่อ Abu Arab โดยตรง",de:"Probleme beim Anmelden? Kontaktieren Sie Abu Arab direkt.",ru:"Проблемы со входом? Свяжитесь с Abu Arab напрямую.",tr:"Giriş sorunu mu? Doğrudan Abu Arab ile iletişime geçin.",ja:"ログインでお困りですか？Abu Arabに直接ご連絡ください。"},
+  staffAccess:{en:"Staff access",es:"Acceso del personal",hi:"स्टाफ़ एक्सेस",ar:"دخول الموظفين",zh:"员工入口",th:"สำหรับเจ้าหน้าที่",de:"Mitarbeiterzugang",ru:"Доступ персонала",tr:"Personel erişimi",ja:"スタッフアクセス"},
+
+  // ── tabs ──
+  payments:{en:"Payments",es:"Pagos",hi:"भुगतान",ar:"الدفعات",zh:"付款",th:"การชำระเงิน",de:"Zahlungen",ru:"Платежи",tr:"Ödemeler",ja:"支払い"},
+  credit:{en:"Credit",es:"Crédito",hi:"क्रेडिट",ar:"الرصيد",zh:"信用",th:"เครดิต",de:"Guthaben",ru:"Кредит",tr:"Kredi",ja:"クレジット"},
+  services:{en:"Services",es:"Servicios",hi:"सेवाएं",ar:"الخدمات",zh:"服务",th:"บริการ",de:"Dienste",ru:"Услуги",tr:"Hizmetler",ja:"サービス"},
+  contract:{en:"Contract",es:"Contrato",hi:"अनुबंध",ar:"العقد",zh:"合同",th:"สัญญา",de:"Vertrag",ru:"Договор",tr:"Sözleşme",ja:"契約"},
+
+  // ── home ──
+  welcomeBack:{en:"Welcome back",es:"Bienvenido de nuevo",hi:"वापसी पर स्वागत है",ar:"أهلاً فيك من جديد",zh:"欢迎回来",th:"ยินดีต้อนรับกลับ",de:"Willkommen zurück",ru:"С возвращением",tr:"Tekrar hoş geldiniz",ja:"おかえりなさい"},
+  yourTrailer:{en:"Your Trailer",es:"Tu Remolque",hi:"आपका ट्रेलर",ar:"التريلر تبعك",zh:"您的拖车",th:"รถพ่วงของคุณ",de:"Ihr Anhänger",ru:"Ваш прицеп",tr:"Römorkunuz",ja:"あなたのトレーラー"},
+  monthlyRate:{en:"Monthly Rate",es:"Tarifa Mensual",hi:"मासिक दर",ar:"الإيجار الشهري",zh:"月租",th:"ค่าเช่ารายเดือน",de:"Monatsrate",ru:"Ежемесячная плата",tr:"Aylık Ücret",ja:"月額料金"},
+  daysLeft:{en:"Days Left",es:"Días Restantes",hi:"शेष दिन",ar:"الأيام المتبقية",zh:"剩余天数",th:"วันที่เหลือ",de:"Verbleibende Tage",ru:"Осталось дней",tr:"Kalan Gün",ja:"残り日数"},
+  monthsPaidShort:{en:"Months Paid",es:"Meses Pagados",hi:"भुगतान किए महीने",ar:"الأشهر المدفوعة",zh:"已付月份",th:"เดือนที่จ่ายแล้ว",de:"Bezahlte Monate",ru:"Оплаченные месяцы",tr:"Ödenen Aylar",ja:"支払済み月数"},
+  monthsLeft:{en:"Months Left",es:"Meses Restantes",hi:"शेष महीने",ar:"الأشهر المتبقية",zh:"剩余月份",th:"เดือนที่เหลือ",de:"Verbleibende Monate",ru:"Осталось месяцев",tr:"Kalan Ay",ja:"残り月数"},
+  paymentDue:{en:"Payment Due",es:"Pago Pendiente",hi:"भुगतान देय",ar:"دفعة مستحقة",zh:"待付款",th:"ครบกำหนดชำระ",de:"Zahlung fällig",ru:"Платёж к оплате",tr:"Ödeme Tarihi",ja:"支払い期限"},
+  payNow:{en:"Pay Now",es:"Pagar Ahora",hi:"अभी भुगतान करें",ar:"ادفع هلق",zh:"立即付款",th:"ชำระตอนนี้",de:"Jetzt bezahlen",ru:"Оплатить сейчас",tr:"Şimdi Öde",ja:"今すぐ支払う"},
+  quickActions:{en:"Quick Actions",es:"Acciones Rápidas",hi:"त्वरित कार्य",ar:"إجراءات سريعة",zh:"快捷操作",th:"การดำเนินการด่วน",de:"Schnellaktionen",ru:"Быстрые действия",tr:"Hızlı İşlemler",ja:"クイックアクション"},
+
+  // ── payments ──
+  amountDueNow:{en:"Amount Due Now",es:"Monto a Pagar",hi:"अभी देय राशि",ar:"المبلغ المستحق الآن",zh:"当前应付金额",th:"จำนวนที่ต้องชำระตอนนี้",de:"Fälliger Betrag",ru:"Сумма к оплате",tr:"Şu An Ödenecek Tutar",ja:"現在の支払額"},
+  payViaZelle:{en:"Pay via Zelle to:",es:"Pagar vía Zelle a:",hi:"Zelle के माध्यम से भुगतान करें:",ar:"ادفع عبر Zelle إلى:",zh:"通过Zelle付款至：",th:"ชำระผ่าน Zelle ไปที่:",de:"Über Zelle bezahlen an:",ru:"Оплатить через Zelle на:",tr:"Zelle ile ödeme yapın:",ja:"Zelleで支払う先："},
+  openZelle:{en:"Open Zelle",es:"Abrir Zelle",hi:"Zelle खोलें",ar:"افتح Zelle",zh:"打开Zelle",th:"เปิด Zelle",de:"Zelle öffnen",ru:"Открыть Zelle",tr:"Zelle'yi Aç",ja:"Zelleを開く"},
+  notifyAbuArab:{en:"I Sent the Payment — Notify Abu Arab",es:"Envié el Pago — Notificar a Abu Arab",hi:"मैंने भुगतान भेजा — अबू अरब को सूचित करें",ar:"بعثت الدفعة — بلّغ أبو عرب",zh:"我已付款——通知Abu Arab",th:"ฉันชำระเงินแล้ว — แจ้ง Abu Arab",de:"Zahlung gesendet — Abu Arab benachrichtigen",ru:"Я отправил платёж — уведомить Abu Arab",tr:"Ödemeyi Gönderdim — Abu Arab'ı Bilgilendir",ja:"支払いました — Abu Arabに通知"},
+  paymentHistory:{en:"Payment History",es:"Historial de Pagos",hi:"भुगतान इतिहास",ar:"سجل الدفعات",zh:"付款记录",th:"ประวัติการชำระเงิน",de:"Zahlungsverlauf",ru:"История платежей",tr:"Ödeme Geçmişi",ja:"支払い履歴"},
+
+  // ── credit ──
+  creditBuyOption:{en:"Credit & Buy Option",es:"Crédito y Opción de Compra",hi:"क्रेडिट और खरीद विकल्प",ar:"الرصيد وخيار الشراء",zh:"信用与购买选项",th:"เครดิตและตัวเลือกซื้อ",de:"Guthaben & Kaufoption",ru:"Кредит и опция покупки",tr:"Kredi ve Satın Alma Seçeneği",ja:"クレジットと購入オプション"},
+  readyToBuy:{en:"Ready to Buy?",es:"¿Listo para Comprar?",hi:"खरीदने के लिए तैयार?",ar:"جاهز تشتري؟",zh:"准备购买了吗？",th:"พร้อมซื้อหรือยัง?",de:"Bereit zu kaufen?",ru:"Готовы купить?",tr:"Satın Almaya Hazır mısınız?",ja:"購入の準備はできましたか？"},
+  callAbuArab:{en:"Call Abu Arab",es:"Llamar a Abu Arab",hi:"अबू अरब को कॉल करें",ar:"اتصل بأبو عرب",zh:"致电Abu Arab",th:"โทรหา Abu Arab",de:"Abu Arab anrufen",ru:"Позвонить Abu Arab",tr:"Abu Arab'ı Ara",ja:"Abu Arabに電話"},
+
+  // ── services ──
+  bookATrailer:{en:"Book a Trailer",es:"Reservar un Remolque",hi:"ट्रेलर बुक करें",ar:"احجز تريلر",zh:"预订拖车",th:"จองรถพ่วง",de:"Anhänger buchen",ru:"Забронировать прицеп",tr:"Römork Rezerve Et",ja:"トレーラーを予約"},
+  requestMaintenance:{en:"Request Maintenance",es:"Solicitar Mantenimiento",hi:"रखरखाव का अनुरोध करें",ar:"اطلب صيانة",zh:"申请维修",th:"ขอบำรุงรักษา",de:"Wartung anfordern",ru:"Запросить обслуживание",tr:"Bakım Talep Et",ja:"メンテナンスを依頼"},
+  requestTransport:{en:"Request Transport",es:"Solicitar Transporte",hi:"परिवहन का अनुरोध करें",ar:"اطلب نقل",zh:"申请运输",th:"ขอการขนส่ง",de:"Transport anfordern",ru:"Запросить перевозку",tr:"Nakliye Talep Et",ja:"輸送を依頼"},
+
+  // ── contract ──
+  myContract:{en:"My Contract",es:"Mi Contrato",hi:"मेरा अनुबंध",ar:"عقدي",zh:"我的合同",th:"สัญญาของฉัน",de:"Mein Vertrag",ru:"Мой договор",tr:"Sözleşmem",ja:"私の契約"},
+  viewBtn:{en:"View",es:"Ver",hi:"देखें",ar:"عرض",zh:"查看",th:"ดู",de:"Ansehen",ru:"Просмотр",tr:"Görüntüle",ja:"表示"},
+  downloadPdf:{en:"Download PDF",es:"Descargar PDF",hi:"पीडीएफ डाउनलोड करें",ar:"تحميل PDF",zh:"下载PDF",th:"ดาวน์โหลด PDF",de:"PDF herunterladen",ru:"Скачать PDF",tr:"PDF İndir",ja:"PDFをダウンロード"},
+  openContract:{en:"Open Contract",es:"Abrir Contrato",hi:"अनुबंध खोलें",ar:"افتح العقد",zh:"打开合同",th:"เปิดสัญญา",de:"Vertrag öffnen",ru:"Открыть договор",tr:"Sözleşmeyi Aç",ja:"契約を開く"},
+  noContract:{en:"No contract uploaded yet. Contact Abu Arab if you need your lease document.",es:"Aún no se ha subido ningún contrato. Contacta a Abu Arab si necesitas tu documento de arrendamiento.",hi:"अभी तक कोई अनुबंध अपलोड नहीं हुआ। यदि आपको लीज़ दस्तावेज़ चाहिए तो अबू अरब से संपर्क करें।",ar:"ما في عقد مرفوع لهلق. تواصل مع أبو عرب إذا محتاج مستند الإيجار.",zh:"尚未上传合同。如需租赁文件，请联系Abu Arab。",th:"ยังไม่มีการอัปโหลดสัญญา ติดต่อ Abu Arab หากคุณต้องการเอกสารเช่า",de:"Noch kein Vertrag hochgeladen. Kontaktieren Sie Abu Arab, falls Sie Ihr Mietdokument benötigen.",ru:"Договор ещё не загружен. Свяжитесь с Abu Arab, если вам нужен документ аренды.",tr:"Henüz sözleşme yüklenmedi. Kira belgenize ihtiyacınız varsa Abu Arab ile iletişime geçin.",ja:"契約書はまだアップロードされていません。リース文書が必要な場合はAbu Arabにご連絡ください。"},
+});
+
 function Pill({color,children}){
   return <span style={{display:"inline-flex",alignItems:"center",gap:4,padding:"3px 9px",borderRadius:99,fontSize:11,fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.06em",background:color+"22",color,border:`1px solid ${color}44`}}>{children}</span>;
 }
 
-function addNotification(db,{forRole,title,body,link}){
-  const n={id:"N"+uid(),forRole,title,body,link,date:today(),read:false};
+// ── Email notifications via EmailJS ─────────────────────────
+// Needs a free EmailJS account (emailjs.com): create a Service + Template,
+// then fill in these three values. Until they're filled in, email sending
+// is silently skipped (everything else keeps working normally).
+const EMAILJS_SERVICE_ID="service_6f09dtj";
+const EMAILJS_TEMPLATE_ID="template_a00rod7";
+const EMAILJS_PUBLIC_KEY="q4ojSHPXyAjOJLkx4";
+
+async function sendEmail(toEmail, toName, subject, message){
+  if(!EMAILJS_SERVICE_ID||!EMAILJS_TEMPLATE_ID||!EMAILJS_PUBLIC_KEY) return; // not configured yet
+  if(!toEmail) return;
+  try{
+    await fetch("https://api.emailjs.com/api/v1.0/email/send",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        service_id:EMAILJS_SERVICE_ID,
+        template_id:EMAILJS_TEMPLATE_ID,
+        user_id:EMAILJS_PUBLIC_KEY,
+        template_params:{ to_email:toEmail, to_name:toName||"", subject, message }
+      })
+    });
+  }catch(err){ console.error("Email send failed:",err); }
+}
+
+function addNotification(db,{forRole,title,body,link,forTenantId}){
+  const n={id:"N"+uid(),forRole,title,body,link,forTenantId,date:today(),read:false};
   db.notifications=[...db.notifications,n];
+  // Fire-and-forget email alongside the in-app notification, whenever this
+  // notification is meant for a specific tenant who has an email on file.
+  if(forTenantId){
+    const t=(db.tenants||[]).find(x=>x.id===forTenantId);
+    if(t?.email) sendEmail(t.email, t.name, title, body);
+  }
   return db;
 }
 
@@ -389,6 +535,8 @@ function LoginScreen({db,onLogin,connStatus}){
   const [pin,setPin]=useState("");
   const [adminPin,setAdminPin]=useState("");
   const [err,setErr]=useState("");
+  const [lang,setLang]=useState("en");
+  const isRTL=RTL_LANGS.includes(lang);
   const ADMIN_PIN="9003";
 
   const doLogin=()=>{
@@ -398,34 +546,40 @@ function LoginScreen({db,onLogin,connStatus}){
       else setErr("Wrong PIN.");
       return;
     }
-    const t=db.tenants.find(t=>(t.phone===phone||t.email===phone)&&t.pin===pin);
-    if(t)onLogin({role:"tenant",id:t.id});
+    const found=db.tenants.find(x=>(x.phone===phone||x.email===phone)&&x.pin===pin);
+    if(found)onLogin({role:"tenant",id:found.id});
     else setErr("Phone/email or PIN is incorrect. Contact Abu Arab if you need help logging in.");
   };
 
   return(
-    <div style={{...s.app,justifyContent:"center",padding:28}}>
+    <div style={{...s.app,justifyContent:"center",padding:28,direction:mode==="tenant"&&isRTL?"rtl":"ltr"}}>
+      {mode==="tenant"&&(
+        <select value={lang} onChange={e=>setLang(e.target.value)} title="Language"
+          style={{position:"absolute",top:18,insetInlineEnd:18,background:"none",border:`1px solid ${C.line}`,color:C.chromeDim,padding:"5px 6px",cursor:"pointer",borderRadius:4,fontSize:11,...s.mono,maxWidth:82}}>
+          {LANGUAGES.map(l=><option key={l.code} value={l.code} style={{background:C.steel,color:C.paper}}>{l.label}</option>)}
+        </select>
+      )}
       <div style={{textAlign:"center",marginBottom:40}}>
         <img src={LOGO_URI} alt="Abu Arab Trailer Solution" style={{width:170,height:"auto",margin:"0 auto 12px",display:"block",filter:"drop-shadow(0 4px 16px rgba(200,155,60,0.25))"}}/>
         <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:10,color:C.gold,letterSpacing:"0.18em",textTransform:"uppercase",marginTop:3}}>
-          {mode==="tenant" ? "Tenant Portal" : "Staff Access"}
+          {mode==="tenant" ? t("tenantPortal",lang) : "Staff Access"}
         </div>
       </div>
 
       {mode==="tenant" ? (
         <div style={{display:"flex",flexDirection:"column",gap:14}}>
           <div>
-            <label style={s.label}>Phone or Email</label>
+            <label style={s.label}>{t("phoneOrEmail",lang)}</label>
             <input style={s.input} value={phone} onChange={e=>setPhone(e.target.value)} placeholder="Your phone or email" onKeyDown={e=>e.key==="Enter"&&doLogin()}/>
           </div>
           <div>
-            <label style={s.label}>4-digit PIN</label>
+            <label style={s.label}>{t("pin4digit",lang)}</label>
             <input style={s.input} type="password" maxLength={4} value={pin} onChange={e=>setPin(e.target.value)} placeholder="••••" onKeyDown={e=>e.key==="Enter"&&doLogin()}/>
           </div>
           {err&&<div style={{color:C.danger,fontSize:12,...s.mono}}>{err}</div>}
-          <button style={{...s.btnGold,marginTop:4}} onClick={doLogin}>Sign In</button>
+          <button style={{...s.btnGold,marginTop:4}} onClick={doLogin}>{t("signIn",lang)}</button>
           <div style={{textAlign:"center",fontSize:11,color:C.chromeDim,...s.mono,marginTop:10}}>
-            Trouble logging in? Contact Abu Arab directly.
+            {t("troubleLogin",lang)}
           </div>
         </div>
       ) : (
@@ -442,7 +596,7 @@ function LoginScreen({db,onLogin,connStatus}){
       {/* Subtle staff-access link — intentionally low-key, not something a tenant needs to notice */}
       <button onClick={()=>{ setMode(m=>m==="tenant"?"admin":"tenant"); setErr(""); }}
         style={{background:"none",border:"none",color:C.chromeDim,fontSize:10,...s.mono,marginTop:32,cursor:"pointer",opacity:0.5,alignSelf:"center"}}>
-        {mode==="tenant" ? "Staff access" : "← Back to tenant login"}
+        {mode==="tenant" ? t("staffAccess",lang) : "← Back to tenant login"}
       </button>
       <div style={{textAlign:"center",fontSize:9,...s.mono,marginTop:10,color:connStatus?.startsWith("✓")?C.good:connStatus?.startsWith("⚠")?C.danger:C.chromeDim,opacity:0.7,wordBreak:"break-word"}}>
         {connStatus}
@@ -454,6 +608,8 @@ function LoginScreen({db,onLogin,connStatus}){
 function TenantApp({db,updateDB,tenantId,onLogout,refreshNow}){
   const [tab,setTab]=useState("home");
   const [justRefreshed,setJustRefreshed]=useState(false);
+  const [lang,setLang]=useState("en");
+  const isRTL=RTL_LANGS.includes(lang);
   const doRefresh=async()=>{ await refreshNow(); setJustRefreshed(true); setTimeout(()=>setJustRefreshed(false),2000); };
   const tenant=db.tenants.find(t=>t.id===tenantId);
   const trailer=tenant?db.trailers.find(tr=>tr.id===tenant.trailerId):null;
@@ -466,21 +622,25 @@ function TenantApp({db,updateDB,tenantId,onLogout,refreshNow}){
   const pendingPay=myPayments.find(p=>p.status==="pending");
 
   const tabs=[
-    {id:"home",icon:ICONS.home,label:"Home"},
-    {id:"payments",icon:ICONS.pay,label:"Payments"},
-    {id:"credit",icon:ICONS.credit,label:"Credit"},
-    {id:"services",icon:ICONS.wrench,label:"Services"},
-    {id:"contract",icon:ICONS.contract,label:"Contract"},
+    {id:"home",icon:ICONS.home,label:t("home",lang)},
+    {id:"payments",icon:ICONS.pay,label:t("payments",lang)},
+    {id:"credit",icon:ICONS.credit,label:t("credit",lang)},
+    {id:"services",icon:ICONS.wrench,label:t("services",lang)},
+    {id:"contract",icon:ICONS.contract,label:t("contract",lang)},
   ];
 
   return(
-    <div style={s.app}>
+    <div style={{...s.app,direction:isRTL?"rtl":"ltr"}}>
       <div style={{background:C.steel,borderBottom:`1px solid ${C.line}`,padding:"13px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
         <div>
           <div style={{fontFamily:"'Oswald',sans-serif",fontSize:15,fontWeight:600,letterSpacing:"0.05em",textTransform:"uppercase"}}>Abu Arab Portal</div>
           <div style={{fontSize:11,color:C.gold,...s.mono,marginTop:1}}>{tenant?.name}</div>
         </div>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <select value={lang} onChange={e=>setLang(e.target.value)} title="Language"
+            style={{background:"none",border:`1px solid ${C.line}`,color:C.chromeDim,padding:"5px 6px",cursor:"pointer",borderRadius:4,fontSize:11,...s.mono,maxWidth:78}}>
+            {LANGUAGES.map(l=><option key={l.code} value={l.code} style={{background:C.steel,color:C.paper}}>{l.label}</option>)}
+          </select>
           <button onClick={doRefresh} title="Refresh" style={{background:"none",border:"none",color:justRefreshed?C.good:C.chromeDim,padding:6,cursor:"pointer",display:"flex",alignItems:"center",gap:4}}>
             {justRefreshed ? (
               <><Icon d={ICONS.check} size={16} color={C.good}/><span style={{fontSize:10,...s.mono}}>Refreshed</span></>
@@ -503,11 +663,11 @@ function TenantApp({db,updateDB,tenantId,onLogout,refreshNow}){
       {showNotifs&&<NotificationsPanel notifs={allMyNotifs} onClose={()=>setShowNotifs(false)} onMarkRead={markRead} onMarkAllRead={markAllRead}/>}
 
       <div style={{flex:1,overflowY:"auto",padding:"18px 16px 80px"}}>
-        {tab==="home"     &&<TenantHome tenant={tenant} trailer={trailer} myPayments={myPayments} pendingPay={pendingPay} setTab={setTab} myNotifs={myNotifs} db={db} updateDB={updateDB} tenantId={tenantId}/>}
-        {tab==="payments" &&<TenantPayments myPayments={myPayments} tenant={tenant} pendingPay={pendingPay} db={db} updateDB={updateDB} tenantId={tenantId}/>}
-        {tab==="credit"   &&<TenantCredit tenant={tenant} trailer={trailer} myPayments={myPayments}/>}
-        {tab==="services" &&<TenantServices db={db} updateDB={updateDB} tenantId={tenantId} tenant={tenant}/>}
-        {tab==="contract" &&<TenantContract db={db} tenantId={tenantId}/>}
+        {tab==="home"     &&<TenantHome tenant={tenant} trailer={trailer} myPayments={myPayments} pendingPay={pendingPay} setTab={setTab} myNotifs={myNotifs} db={db} updateDB={updateDB} tenantId={tenantId} lang={lang}/>}
+        {tab==="payments" &&<TenantPayments myPayments={myPayments} tenant={tenant} pendingPay={pendingPay} db={db} updateDB={updateDB} tenantId={tenantId} lang={lang}/>}
+        {tab==="credit"   &&<TenantCredit tenant={tenant} trailer={trailer} myPayments={myPayments} lang={lang}/>}
+        {tab==="services" &&<TenantServices db={db} updateDB={updateDB} tenantId={tenantId} tenant={tenant} lang={lang}/>}
+        {tab==="contract" &&<TenantContract db={db} tenantId={tenantId} lang={lang}/>}
       </div>
 
       <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,background:C.steel,borderTop:`1px solid ${C.line}`,display:"flex",zIndex:50}}>
@@ -527,7 +687,7 @@ function TenantApp({db,updateDB,tenantId,onLogout,refreshNow}){
 
 /* ── Tenant Home ─────────────────────────────────────────── */
 
-function TenantHome({tenant,trailer,myPayments,pendingPay,setTab,myNotifs,db,updateDB,tenantId}){
+function TenantHome({tenant,trailer,myPayments,pendingPay,setTab,myNotifs,db,updateDB,tenantId,lang}){
   const daysLeft=tenant?Math.max(0,Math.round((new Date(tenant.endDate)-new Date())/86400000)):0;
   const paid=myPayments.filter(p=>p.status==="paid").reduce((s,p)=>s+p.amount,0);
   const credit=Math.round(paid*(tenant?.creditRate||15)/100);
@@ -543,19 +703,19 @@ function TenantHome({tenant,trailer,myPayments,pendingPay,setTab,myNotifs,db,upd
   return(
     <div style={{display:"flex",flexDirection:"column",gap:14}} className="fadein">
       <div>
-        <div style={{...s.heading,fontSize:22,fontWeight:700}}>Welcome back</div>
+        <div style={{...s.heading,fontSize:22,fontWeight:700}}>{t("welcomeBack",lang)}</div>
         <div style={{color:C.chromeDim,fontSize:13,marginTop:2}}>{tenant?.name} · Active Tenant</div>
       </div>
 
       {trailer&&(
         <div style={{...s.goldCard,position:"relative",overflow:"hidden"}}>
           <div style={{position:"absolute",inset:0,background:`linear-gradient(135deg,${C.gold}08,transparent)`,pointerEvents:"none"}}/>
-          <div style={{fontSize:10,...s.mono,color:C.gold,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Your Trailer</div>
+          <div style={{fontSize:10,...s.mono,color:C.gold,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>{t("yourTrailer",lang)}</div>
           <div style={{...s.heading,fontSize:18,fontWeight:600,marginBottom:6}}>{trailer.name}</div>
           <div style={{fontSize:12,color:C.chromeDim}}>{trailer.length} · {trailer.power}</div>
           <div style={{marginTop:12,paddingTop:12,borderTop:`1px solid ${C.line}`,display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
-            <StatMini label="Monthly Rate" val={fmt$(tenant.monthlyRate)}/>
-            <StatMini label="Days Left" val={daysLeft+" days"}/>
+            <StatMini label={t("monthlyRate",lang)} val={fmt$(tenant.monthlyRate)}/>
+            <StatMini label={t("daysLeft",lang)} val={daysLeft+" days"}/>
             <StatMini label="Credit Built" val={fmt$(credit)}/>
           </div>
         </div>
@@ -590,10 +750,10 @@ function TenantHome({tenant,trailer,myPayments,pendingPay,setTab,myNotifs,db,upd
         <div style={{background:C.warnBg,border:`1px solid ${C.warn}44`,borderRadius:6,padding:"14px 16px"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <div>
-              <div style={{fontSize:12,fontWeight:600,color:C.warn}}>Payment Due</div>
+              <div style={{fontSize:12,fontWeight:600,color:C.warn}}>{t("paymentDue",lang)}</div>
               <div style={{fontSize:13,marginTop:3}}>{pendingPay.note} — <strong style={{color:C.paper}}>{fmt$(pendingPay.amount)}</strong></div>
             </div>
-            <button onClick={()=>setTab("payments")} style={{...s.btnGold,width:"auto",padding:"8px 14px",fontSize:10}}>Pay Now</button>
+            <button onClick={()=>setTab("payments")} style={{...s.btnGold,width:"auto",padding:"8px 14px",fontSize:10}}>{t("payNow",lang)}</button>
           </div>
         </div>
       )}
@@ -604,11 +764,11 @@ function TenantHome({tenant,trailer,myPayments,pendingPay,setTab,myNotifs,db,upd
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
             <div style={{...s.card,textAlign:"center",padding:"14px 8px"}}>
               <div style={{fontSize:20,...s.mono,color:C.gold}}>{lm.paid}<span style={{fontSize:12,color:C.chromeDim}}>/{lm.total}</span></div>
-              <div style={{fontSize:9,...s.mono,color:C.chromeDim,textTransform:"uppercase",letterSpacing:"0.06em",marginTop:4}}>Months Paid</div>
+              <div style={{fontSize:9,...s.mono,color:C.chromeDim,textTransform:"uppercase",letterSpacing:"0.06em",marginTop:4}}>{t("monthsPaidShort",lang)}</div>
             </div>
             <div style={{...s.card,textAlign:"center",padding:"14px 8px"}}>
               <div style={{fontSize:20,...s.mono,color:C.paper}}>{lm.remaining}</div>
-              <div style={{fontSize:9,...s.mono,color:C.chromeDim,textTransform:"uppercase",letterSpacing:"0.06em",marginTop:4}}>Months Left</div>
+              <div style={{fontSize:9,...s.mono,color:C.chromeDim,textTransform:"uppercase",letterSpacing:"0.06em",marginTop:4}}>{t("monthsLeft",lang)}</div>
             </div>
             <div style={{...s.card,textAlign:"center",padding:"14px 8px"}}>
               <div style={{fontSize:20,...s.mono,color:C.gold}}>{fmt$(credit)}</div>
@@ -618,7 +778,7 @@ function TenantHome({tenant,trailer,myPayments,pendingPay,setTab,myNotifs,db,upd
         );
       })()}
 
-      <div style={{...s.heading,fontSize:11,color:C.chromeDim,marginTop:4}}>Quick Actions</div>
+      <div style={{...s.heading,fontSize:11,color:C.chromeDim,marginTop:4}}>{t("quickActions",lang)}</div>
       {[
         {icon:ICONS.pay,label:"Payments & Pay via Zelle",sub:"View history · pay now",tab:"payments"},
         {icon:ICONS.credit,label:"My Credit & Buy Option",sub:"Rent-to-own progress",tab:"credit"},
@@ -652,7 +812,7 @@ function StatMini({label,val}){
 
 /* ── Tenant Payments ─────────────────────────────────────── */
 
-function TenantPayments({myPayments,tenant,pendingPay,db,updateDB,tenantId}){
+function TenantPayments({myPayments,tenant,pendingPay,db,updateDB,tenantId,lang}){
   
   const [notifSent,setNotifSent]=useState(false);
 
@@ -666,7 +826,7 @@ function TenantPayments({myPayments,tenant,pendingPay,db,updateDB,tenantId}){
 
   return(
     <div style={{display:"flex",flexDirection:"column",gap:16}} className="fadein">
-      <div style={{...s.heading,fontSize:20,fontWeight:700}}>Payments</div>
+      <div style={{...s.heading,fontSize:20,fontWeight:700}}>{t("payments",lang)}</div>
 
       {tenant?.securityDeposit>0&&(
         <div style={{...s.card,display:"flex",alignItems:"center",gap:12,
@@ -677,7 +837,7 @@ function TenantPayments({myPayments,tenant,pendingPay,db,updateDB,tenantId}){
             <Icon d={ICONS.credit} size={18} color={tenant.depositPaid ? C.good : C.warn}/>
           </div>
           <div style={{flex:1}}>
-            <div style={{fontSize:13,fontWeight:600}}>Security Deposit</div>
+            <div style={{fontSize:13,fontWeight:600}}>{t("securityDeposit",lang)}</div>
             <div style={{fontSize:11,color:C.chromeDim,marginTop:2}}>
               {tenant.depositPaid ? "Received and on file" : "Not yet received"}
             </div>
@@ -691,11 +851,11 @@ function TenantPayments({myPayments,tenant,pendingPay,db,updateDB,tenantId}){
 
       {pendingPay&&(
         <div style={s.goldCard}>
-          <div style={{fontSize:10,...s.mono,color:C.gold,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:10}}>Amount Due Now</div>
+          <div style={{fontSize:10,...s.mono,color:C.gold,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:10}}>{t("amountDueNow",lang)}</div>
           <div style={{fontSize:32,...s.mono,color:C.gold,fontWeight:500}}>{fmt$(pendingPay.amount)}</div>
           <div style={{fontSize:12,color:C.chromeDim,marginTop:4}}>{pendingPay.note} · Due {fmtDate(pendingPay.date)}</div>
           <div style={{marginTop:14,paddingTop:14,borderTop:`1px solid ${C.line}`}}>
-            <div style={{fontSize:11,...s.mono,color:C.chromeDim,marginBottom:8}}>Pay via Zelle to:</div>
+            <div style={{fontSize:11,...s.mono,color:C.chromeDim,marginBottom:8}}>{t("payViaZelle",lang)}</div>
             <div style={{background:C.ink2,border:`1px solid ${C.lineBright}`,borderRadius:5,padding:"12px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
               <div>
                 <div style={{fontSize:12,...s.mono,color:C.chromeDim}}>Send to</div>
@@ -703,21 +863,21 @@ function TenantPayments({myPayments,tenant,pendingPay,db,updateDB,tenantId}){
                 <div style={{fontSize:11,color:C.chromeDim,marginTop:1}}>Abu Arab Trailer Solution</div>
               </div>
               <a href={`zelle://pay`} style={{background:"#6B1FCD",color:"#fff",border:"none",borderRadius:4,padding:"10px 14px",fontSize:12,fontWeight:700,...s.mono,textDecoration:"none",display:"flex",alignItems:"center",gap:6,whiteSpace:"nowrap"}}>
-                Open Zelle
+                {t("openZelle",lang)}
               </a>
             </div>
             <div style={{marginTop:10,padding:"10px 14px",background:C.blueBg,border:`1px solid ${C.blue}44`,borderRadius:5}}>
               <div style={{fontSize:12,color:C.paper,marginBottom:8}}>After sending payment, tap below to notify Abu Arab:</div>
               <button onClick={notifyAfterPay} disabled={notifSent}
                 style={{...s.btnGold,padding:"10px",opacity:notifSent?0.6:1}}>
-                {notifSent?"✓ Abu Arab Notified":"I Sent the Payment — Notify Abu Arab"}
+                {notifSent?"✓ Abu Arab Notified":t("notifyAbuArab",lang)}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      <div style={{...s.heading,fontSize:11,color:C.chromeDim,letterSpacing:"0.08em"}}>Payment History</div>
+      <div style={{...s.heading,fontSize:11,color:C.chromeDim,letterSpacing:"0.08em"}}>{t("paymentHistory",lang)}</div>
       {myPayments.length===0&&<div style={{color:C.chromeDim,fontSize:13}}>No payments yet.</div>}
       {myPayments.map(p=>(
         <div key={p.id} style={{...s.card,display:"flex",alignItems:"center",gap:12}}>
@@ -740,7 +900,7 @@ function TenantPayments({myPayments,tenant,pendingPay,db,updateDB,tenantId}){
 
 /* ── Tenant Credit / Rent-to-Own ─────────────────────────── */
 
-function TenantCredit({tenant,trailer,myPayments}){
+function TenantCredit({tenant,trailer,myPayments,lang}){
   const paid=myPayments.filter(p=>p.status==="paid").reduce((s,p)=>s+p.amount,0);
   const creditRate=tenant?.creditRate||15;
   const credit=Math.round(paid*creditRate/100);
@@ -750,7 +910,7 @@ function TenantCredit({tenant,trailer,myPayments}){
 
   return(
     <div style={{display:"flex",flexDirection:"column",gap:16}} className="fadein">
-      <div style={{...s.heading,fontSize:20,fontWeight:700}}>Credit & Buy Option</div>
+      <div style={{...s.heading,fontSize:20,fontWeight:700}}>{t("creditBuyOption",lang)}</div>
       <div style={{fontSize:13,color:C.chromeDim}}>
         A portion of every rent payment you make goes toward a credit that can be applied to purchase your trailer.
       </div>
@@ -822,10 +982,10 @@ function TenantCredit({tenant,trailer,myPayments}){
       </div>
 
       <div style={{...s.card,background:C.goodBg,border:`1px solid ${C.good}44`}}>
-        <div style={{fontSize:13,fontWeight:500,marginBottom:6}}>Ready to Buy?</div>
+        <div style={{fontSize:13,fontWeight:500,marginBottom:6}}>{t("readyToBuy",lang)}</div>
         <div style={{fontSize:12,color:C.chromeDim,marginBottom:12}}>Contact Abu Arab to start the purchase process. Your {fmt$(credit)} credit will be applied immediately.</div>
         <a href="tel:+17378889096" style={{...s.btnGold,display:"flex",alignItems:"center",justifyContent:"center",gap:6,textDecoration:"none"}}>
-          <Icon d={ICONS.contact} size={14}/> Call Abu Arab
+          <Icon d={ICONS.contact} size={14}/> {t("callAbuArab",lang)}
         </a>
       </div>
     </div>
@@ -834,7 +994,7 @@ function TenantCredit({tenant,trailer,myPayments}){
 
 /* ── Tenant Services (Maintenance + Transport) ───────────── */
 
-function TenantServices({db,updateDB,tenantId,tenant}){
+function TenantServices({db,updateDB,tenantId,tenant,lang}){
   const [screen,setScreen]=useState("menu"); // menu | maint-form | transport-form | book-list | book-form
   const myMaint=(db.maintenanceRequests||[]).filter(r=>r.tenantId===tenantId);
   const myTrans=(db.transportRequests||[]).filter(r=>r.tenantId===tenantId);
@@ -1038,7 +1198,7 @@ function TenantServices({db,updateDB,tenantId,tenant}){
   // ── menu ─────────────────────────────────────────────────────
   return(
     <div style={{display:"flex",flexDirection:"column",gap:14}} className="fadein">
-      <div style={{...s.heading,fontSize:20,fontWeight:700}}>Services</div>
+      <div style={{...s.heading,fontSize:20,fontWeight:700}}>{t("services",lang)}</div>
 
       {sent==="maint"&&<div style={{background:C.goodBg,border:`1px solid ${C.good}44`,borderRadius:6,padding:"12px 14px",fontSize:13,color:C.good}}>✓ Maintenance request sent! Abu Arab will follow up soon.</div>}
       {sent==="trans"&&<div style={{background:C.goodBg,border:`1px solid ${C.good}44`,borderRadius:6,padding:"12px 14px",fontSize:13,color:C.good}}>✓ Transport request sent! You'll receive a price quote shortly.</div>}
@@ -1046,9 +1206,9 @@ function TenantServices({db,updateDB,tenantId,tenant}){
 
       {/* service cards */}
       {[
-        {icon:ICONS.book,color:C.gold,title:"Book a Trailer",desc:"Browse available trailers, pick your dates and send a booking request.",action:()=>setScreen("book-list"),badge:(db.bookingRequests||[]).filter(r=>r.tenantId===tenantId&&r.status==="approved").length},
-        {icon:ICONS.wrench,color:C.warn,title:"Request Maintenance",desc:"Report an issue with your trailer. Add a photo if helpful.",action:()=>setScreen("maint-form"),badge:myMaint.filter(r=>r.status==="in-progress").length},
-        {icon:ICONS.truck,color:C.blue,title:"Request Transport",desc:"Need your trailer moved? Submit pickup/drop-off details and get a price quote.",action:()=>setScreen("transport-form"),badge:myTrans.filter(r=>r.status==="quoted").length},
+        {icon:ICONS.book,color:C.gold,title:t("bookATrailer",lang),desc:"Browse available trailers, pick your dates and send a booking request.",action:()=>setScreen("book-list"),badge:(db.bookingRequests||[]).filter(r=>r.tenantId===tenantId&&r.status==="approved").length},
+        {icon:ICONS.wrench,color:C.warn,title:t("requestMaintenance",lang),desc:"Report an issue with your trailer. Add a photo if helpful.",action:()=>setScreen("maint-form"),badge:myMaint.filter(r=>r.status==="in-progress").length},
+        {icon:ICONS.truck,color:C.blue,title:t("requestTransport",lang),desc:"Need your trailer moved? Submit pickup/drop-off details and get a price quote.",action:()=>setScreen("transport-form"),badge:myTrans.filter(r=>r.status==="quoted").length},
       ].map(a=>(
         <button key={a.title} onClick={a.action}
           style={{display:"flex",alignItems:"center",gap:14,background:C.steel,border:`1px solid ${C.line}`,borderRadius:6,padding:"16px 15px",cursor:"pointer",textAlign:"left",width:"100%",color:C.paper,position:"relative"}}>
@@ -1116,7 +1276,7 @@ function TenantServices({db,updateDB,tenantId,tenant}){
 
 /* ── Tenant Contract ─────────────────────────────────────── */
 
-function TenantContract({db,tenantId}){
+function TenantContract({db,tenantId,lang}){
   const myContracts=db.contracts.filter(c=>c.tenantId===tenantId);
   const [busy,setBusy]=useState("");
   const [err,setErr]=useState("");
@@ -1141,13 +1301,13 @@ function TenantContract({db,tenantId}){
   };
   return(
     <div style={{display:"flex",flexDirection:"column",gap:16}} className="fadein">
-      <div style={{...s.heading,fontSize:20,fontWeight:700}}>My Contract</div>
+      <div style={{...s.heading,fontSize:20,fontWeight:700}}>{t("myContract",lang)}</div>
       <div style={{fontSize:13,color:C.chromeDim}}>Your rental lease agreement, uploaded by Abu Arab. View or download at any time.</div>
       {err&&<div style={{fontSize:12,color:C.danger,padding:"10px 12px",background:C.dangerBg,border:`1px solid ${C.danger}44`,borderRadius:5}}>⚠ {err}</div>}
       {myContracts.length===0?(
         <div style={{...s.card,textAlign:"center",padding:"36px 20px"}}>
           <Icon d={ICONS.contract} size={36} color={C.chromeDim}/>
-          <div style={{marginTop:14,fontSize:13,color:C.chromeDim}}>No contract uploaded yet. Contact Abu Arab if you need your lease document.</div>
+          <div style={{marginTop:14,fontSize:13,color:C.chromeDim}}>{t("noContract",lang)}</div>
         </div>
       ):myContracts.map(c=>(
         <div key={c.id} style={s.goldCard}>
@@ -1163,12 +1323,12 @@ function TenantContract({db,tenantId}){
           {c.url ? (
             <a href={c.url} target="_blank" rel="noopener noreferrer"
               style={{...s.btnGold,marginTop:14,display:"flex",alignItems:"center",justifyContent:"center",gap:6,textDecoration:"none"}}>
-              <Icon d={ICONS.eye} size={14}/> Open Contract
+              <Icon d={ICONS.eye} size={14}/> {t("openContract",lang)}
             </a>
           ) : (
             <div style={{display:"flex",gap:8,marginTop:14}}>
-              <button onClick={()=>viewPDF(c)} disabled={busy!==""} style={{...s.btnOut,flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,opacity:busy!==""?0.6:1}}><Icon d={ICONS.eye} size={14}/>{busy===c.id+"-view"?"Loading…":"View"}</button>
-              <button onClick={()=>downloadPDF(c)} disabled={busy!==""} style={{...s.btnGold,flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,opacity:busy!==""?0.6:1}}><Icon d={ICONS.download} size={14}/>{busy===c.id+"-dl"?"Loading…":"Download PDF"}</button>
+              <button onClick={()=>viewPDF(c)} disabled={busy!==""} style={{...s.btnOut,flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,opacity:busy!==""?0.6:1}}><Icon d={ICONS.eye} size={14}/>{busy===c.id+"-view"?"Loading…":t("viewBtn",lang)}</button>
+              <button onClick={()=>downloadPDF(c)} disabled={busy!==""} style={{...s.btnGold,flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,opacity:busy!==""?0.6:1}}><Icon d={ICONS.download} size={14}/>{busy===c.id+"-dl"?"Loading…":t("downloadPdf",lang)}</button>
             </div>
           )}
         </div>
@@ -1185,31 +1345,65 @@ function AdminApp({db,updateDB,onLogout,refreshNow}){
   const [tab,setTab]=useState("dashboard");
   const [justRefreshed,setJustRefreshed]=useState(false);
   const [showNotifs,setShowNotifs]=useState(false);
+  const [lang,setLang]=useState("en"); // "en" | "ar" — admin-side language toggle
   const doRefresh=async()=>{ await refreshNow(); setJustRefreshed(true); setTimeout(()=>setJustRefreshed(false),2000); };
   const allNotifs=db.notifications.filter(n=>n.forRole==="admin").slice().reverse();
   const unreadNotifs=db.notifications.filter(n=>n.forRole==="admin"&&!n.read);
+
+  // Ask for browser notification permission once, and ping (sound + system popup)
+  // whenever the unread count goes UP — this is how the admin gets alerted about
+  // a new tenant request without having to keep the tab open and staring at it.
+  const prevUnreadCount=useRef(unreadNotifs.length);
+  useEffect(()=>{
+    if("Notification" in window && Notification.permission==="default"){
+      Notification.requestPermission();
+    }
+  },[]);
+  useEffect(()=>{
+    if(unreadNotifs.length>prevUnreadCount.current){
+      const newest=unreadNotifs[unreadNotifs.length-1];
+      // audible ping
+      try{
+        const ctx=new (window.AudioContext||window.webkitAudioContext)();
+        const osc=ctx.createOscillator(); const gain=ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.frequency.value=880; gain.gain.value=0.15;
+        osc.start(); osc.stop(ctx.currentTime+0.18);
+      }catch{}
+      // system notification popup (works while tab/app is open)
+      if("Notification" in window && Notification.permission==="granted" && newest){
+        try{ new Notification(newest.title||"New request", {body:newest.body||"", icon:LOGO_URI}); }catch{}
+      }
+    }
+    prevUnreadCount.current=unreadNotifs.length;
+  },[unreadNotifs.length]);
+
   const markRead=(id)=>updateDB(db=>{db.notifications=db.notifications.map(n=>n.id===id?{...n,read:true}:n);return db;});
   const markAllRead=()=>updateDB(db=>{db.notifications=db.notifications.map(n=>n.forRole==="admin"?{...n,read:true}:n);return db;});
   const tabs=[
-    {id:"dashboard",icon:ICONS.home,label:"Overview"},
-    {id:"tenants",icon:ICONS.user,label:"Tenants"},
-    {id:"payments",icon:ICONS.pay,label:"Payments"},
-    {id:"fleet",icon:ICONS.trailer,label:"Fleet"},
+    {id:"dashboard",icon:ICONS.home,label:t("overview",lang)},
+    {id:"tenants",icon:ICONS.user,label:t("tenants",lang)},
+    {id:"payments",icon:ICONS.pay,label:t("payments",lang)},
+    {id:"fleet",icon:ICONS.trailer,label:t("fleet",lang)},
   ];
   return(
-    <div style={s.app}>
+    <div style={{...s.app,direction:lang==="ar"?"rtl":"ltr"}}>
       <div style={{background:C.steel2,borderBottom:`1px solid ${C.lineBright}`,padding:"12px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
           <img src={LOGO_URI} alt="logo" style={{height:38,width:"auto",filter:"drop-shadow(0 2px 6px rgba(200,155,60,0.3))"}}/>
           <div>
-            <div style={{fontFamily:"'Oswald',sans-serif",fontSize:13,fontWeight:600,letterSpacing:"0.05em",textTransform:"uppercase"}}>Admin Panel</div>
+            <div style={{fontFamily:"'Oswald',sans-serif",fontSize:13,fontWeight:600,letterSpacing:"0.05em",textTransform:"uppercase"}}>{t("adminPanel",lang)}</div>
             <div style={{fontSize:10,color:C.gold,...s.mono}}>Abu Arab Trailer Solution</div>
           </div>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <button onClick={()=>setLang(l=>l==="en"?"ar":"en")} title="Language"
+            style={{background:"none",border:`1px solid ${C.line}`,color:C.chromeDim,padding:"4px 9px",cursor:"pointer",borderRadius:4,fontSize:10,...s.mono,letterSpacing:"0.04em"}}>
+            {lang==="en" ? "عربي" : "EN"}
+          </button>
           <button onClick={doRefresh} title="Refresh" style={{background:"none",border:"none",color:justRefreshed?C.good:C.chromeDim,padding:6,cursor:"pointer",display:"flex",alignItems:"center",gap:4}}>
             {justRefreshed ? (
-              <><Icon d={ICONS.check} size={16} color={C.good}/><span style={{fontSize:10,...s.mono}}>Refreshed</span></>
+              <><Icon d={ICONS.check} size={16} color={C.good}/><span style={{fontSize:10,...s.mono}}>{t("refreshed",lang)}</span></>
             ) : (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
             )}
@@ -1240,10 +1434,10 @@ function AdminApp({db,updateDB,onLogout,refreshNow}){
       {showNotifs&&<NotificationsPanel notifs={allNotifs} onClose={()=>setShowNotifs(false)} onMarkRead={markRead} onMarkAllRead={markAllRead}/>}
 
       <div style={{flex:1,overflowY:"auto",padding:"16px 14px 80px"}}>
-        {tab==="dashboard"&&<AdminDashboard db={db} updateDB={updateDB} setTab={setTab}/>}
-        {tab==="tenants"  &&<AdminTenants   db={db} updateDB={updateDB}/>}
-        {tab==="payments" &&<AdminPayments  db={db} updateDB={updateDB}/>}
-        {tab==="fleet"    &&<AdminFleet     db={db} updateDB={updateDB}/>}
+        {tab==="dashboard"&&<AdminDashboard db={db} updateDB={updateDB} setTab={setTab} lang={lang}/>}
+        {tab==="tenants"  &&<AdminTenants   db={db} updateDB={updateDB} lang={lang}/>}
+        {tab==="payments" &&<AdminPayments  db={db} updateDB={updateDB} lang={lang}/>}
+        {tab==="fleet"    &&<AdminFleet     db={db} updateDB={updateDB} lang={lang}/>}
       </div>
 
       <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,background:C.steel2,borderTop:`1px solid ${C.lineBright}`,display:"flex",zIndex:50}}>
@@ -1262,7 +1456,7 @@ function AdminApp({db,updateDB,onLogout,refreshNow}){
 
 /* ── Admin Dashboard ─────────────────────────────────────── */
 
-function AdminDashboard({db,updateDB,setTab}){
+function AdminDashboard({db,updateDB,setTab,lang}){
   const totalPaid=db.payments.filter(p=>p.status==="paid").reduce((s,p)=>s+p.amount,0);
   const pending=db.payments.filter(p=>p.status==="pending");
   const maintPending=(db.maintenanceRequests||[]).filter(r=>r.status==="pending"||r.status==="in-progress");
@@ -1271,18 +1465,18 @@ function AdminDashboard({db,updateDB,setTab}){
 
   return(
     <div style={{display:"flex",flexDirection:"column",gap:14}} className="fadein">
-      <div style={{...s.heading,fontSize:22,fontWeight:700}}>Overview</div>
+      <div style={{...s.heading,fontSize:22,fontWeight:700}}>{t("overview",lang)}</div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-        <StatCard val={db.tenants.length} label="Tenants"/>
-        <StatCard val={fmt$(totalPaid)} label="Total Collected"/>
-        <StatCard val={pending.length} label="Pending Payments" warn={pending.length>0}/>
-        <StatCard val={db.trailers.filter(t=>t.status==="available").length} label="Available Trailers"/>
+        <StatCard val={db.tenants.length} label={t("tenants",lang)}/>
+        <StatCard val={fmt$(totalPaid)} label={t("totalCollected",lang)}/>
+        <StatCard val={pending.length} label={t("pendingPayments",lang)} warn={pending.length>0}/>
+        <StatCard val={db.trailers.filter(t=>t.status==="available").length} label={t("availableTrailers",lang)}/>
       </div>
 
       {/* lease progress per tenant */}
       {db.tenants.length>0&&(
         <>
-          <div style={{...s.heading,fontSize:11,color:C.chromeDim,marginTop:4}}>Lease Progress</div>
+          <div style={{...s.heading,fontSize:11,color:C.chromeDim,marginTop:4}}>{t("leaseProgress",lang)}</div>
           {db.tenants.map(t=>{
             const lm=leaseMonths(t, db.payments);
             if(lm.total===0) return null;
@@ -1327,7 +1521,7 @@ function AdminDashboard({db,updateDB,setTab}){
         </button>
       ))}
 
-      <div style={{...s.heading,fontSize:11,color:C.chromeDim,marginTop:4}}>Recent Payments</div>
+      <div style={{...s.heading,fontSize:11,color:C.chromeDim,marginTop:4}}>{t("recentPayments",lang)}</div>
       {db.payments.slice(-4).reverse().map(p=>{
         const t=db.tenants.find(x=>x.id===p.tenantId);
         return(
@@ -1358,7 +1552,7 @@ function StatCard({val,label,warn}){
 
 /* ── Admin Tenants ───────────────────────────────────────── */
 
-function AdminTenants({db,updateDB}){
+function AdminTenants({db,updateDB,lang}){
   const [view,setView]=useState("list");
   const [sel,setSel]=useState(null);
   const [form,setForm]=useState({name:"",phone:"",email:"",pin:"1234",trailerId:"",startDate:"",endDate:"",monthlyRate:"",creditRate:"15",securityDeposit:""});
@@ -1440,7 +1634,23 @@ function AdminTenants({db,updateDB}){
   const selMaint=sel?(db.maintenanceRequests||[]).filter(r=>r.tenantId===sel.id):[];
   const selTrans=sel?(db.transportRequests||[]).filter(r=>r.tenantId===sel.id):[];
 
-  const updateMaintStatus=(id,status)=>updateDB(db=>{const r=db.maintenanceRequests.find(x=>x.id===id);if(r)r.status=status;return db;});
+  const updateMaintStatus=(id,status)=>updateDB(db=>{
+    const r=db.maintenanceRequests.find(x=>x.id===id);
+    if(r){
+      r.status=status;
+      const t=db.tenants.find(x=>x.id===r.tenantId);
+      const messages={
+        approved:"Abu Arab approved your maintenance request. Work will begin shortly.",
+        declined:"Abu Arab reviewed your maintenance request and it was not approved. Contact Abu Arab for details.",
+        "in-progress":"Your maintenance request is now in progress.",
+        done:"Your maintenance request has been completed.",
+      };
+      if(t && messages[status]){
+        addNotification(db,{forRole:"tenant",forTenantId:t.id,title:"Maintenance Update",body:messages[status]});
+      }
+    }
+    return db;
+  });
   const sendTransportQuote=(id,price,note)=>updateDB(db=>{
     const r=db.transportRequests.find(x=>x.id===id);
     if(r){r.status="quoted";r.quotedPrice=Number(price);r.adminNote=note;}
@@ -1539,16 +1749,23 @@ function AdminTenants({db,updateDB}){
                     <div style={{fontSize:11,color:C.chromeDim,marginTop:3}}>Priority: {r.priority} · {fmtDate(r.date)}</div>
                     {r.photo&&<img src={r.photo} alt="" style={{marginTop:8,borderRadius:4,maxHeight:100,maxWidth:160,objectFit:"cover",border:`1px solid ${C.line}`}}/>}
                   </div>
-                  <Pill color={r.status==="done"?C.good:r.status==="in-progress"?C.blue:C.warn}>{r.status}</Pill>
+                  <Pill color={r.status==="done"?C.good:r.status==="declined"?C.danger:r.status==="approved"||r.status==="in-progress"?C.blue:C.warn}>{r.status}</Pill>
                 </div>
-                <div style={{display:"flex",gap:6,marginTop:10,flexWrap:"wrap"}}>
-                  {["pending","in-progress","done"].map(st=>(
-                    <button key={st} onClick={()=>updateMaintStatus(r.id,st)}
-                      style={{background:r.status===st?C.gold:"transparent",color:r.status===st?C.ink:C.chromeDim,border:`1px solid ${C.line}`,borderRadius:3,padding:"4px 10px",fontSize:11,...s.mono,cursor:"pointer"}}>
-                      {st}
-                    </button>
-                  ))}
-                </div>
+                {r.status==="pending" ? (
+                  <div style={{display:"flex",gap:8,marginTop:10}}>
+                    <button onClick={()=>updateMaintStatus(r.id,"approved")} style={{...s.btnGold,flex:1,padding:"9px"}}>✓ Approve</button>
+                    <button onClick={()=>updateMaintStatus(r.id,"declined")} style={{...s.btnOut,flex:1,padding:"9px",color:C.danger,borderColor:C.danger+"44"}}>✗ Decline</button>
+                  </div>
+                ) : (
+                  <div style={{display:"flex",gap:6,marginTop:10,flexWrap:"wrap"}}>
+                    {["approved","in-progress","done"].map(st=>(
+                      <button key={st} onClick={()=>updateMaintStatus(r.id,st)}
+                        style={{background:r.status===st?C.gold:"transparent",color:r.status===st?C.ink:C.chromeDim,border:`1px solid ${C.line}`,borderRadius:3,padding:"4px 10px",fontSize:11,...s.mono,cursor:"pointer"}}>
+                        {st}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </>
@@ -1600,9 +1817,9 @@ function AdminTenants({db,updateDB}){
   return(
     <div style={{display:"flex",flexDirection:"column",gap:12}} className="fadein">
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <div style={{...s.heading,fontSize:20,fontWeight:700}}>Tenants</div>
+        <div style={{...s.heading,fontSize:20,fontWeight:700}}>{t("tenants",lang)}</div>
         <button onClick={()=>setView("add")} style={{...s.btnGold,width:"auto",padding:"9px 14px",display:"flex",alignItems:"center",gap:6}}>
-          <Icon d={ICONS.plus} size={13}/> Add
+          <Icon d={ICONS.plus} size={13}/> {t("add",lang)}
         </button>
       </div>
 
@@ -1683,7 +1900,7 @@ function TransportRequestCard({r,onQuote}){
 
 /* ── Admin Payments ──────────────────────────────────────── */
 
-function AdminPayments({db,updateDB}){
+function AdminPayments({db,updateDB,lang}){
   const [form,setForm]=useState({tenantId:"",amount:"",date:today(),method:"Zelle",status:"paid",note:""});
   const [adding,setAdding]=useState(false);
 
@@ -1715,9 +1932,9 @@ function AdminPayments({db,updateDB}){
   return(
     <div style={{display:"flex",flexDirection:"column",gap:12}} className="fadein">
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <div style={{...s.heading,fontSize:20,fontWeight:700}}>Payments</div>
+        <div style={{...s.heading,fontSize:20,fontWeight:700}}>{t("payments",lang)}</div>
         <button onClick={()=>setAdding(!adding)} style={{...s.btnGold,width:"auto",padding:"9px 14px",display:"flex",alignItems:"center",gap:6}}>
-          <Icon d={ICONS.plus} size={13}/> Add
+          <Icon d={ICONS.plus} size={13}/> {t("add",lang)}
         </button>
       </div>
       <div style={{fontSize:12,color:C.chromeDim}}>
@@ -1782,7 +1999,7 @@ function AdminPayments({db,updateDB}){
 
 /* ── Admin Fleet ─────────────────────────────────────────── */
 
-function AdminFleet({db,updateDB}){
+function AdminFleet({db,updateDB,lang}){
   const [filter,setFilter]=useState("all"); // all | available | rented | maintenance
   const [adding,setAdding]=useState(false);
   const [form,setForm]=useState({name:"",length:"",power:"",kitchen:"",fridge:"",dailyRate:"",monthlyRate:"",purchasePrice:"",photo:null,photoName:""});
@@ -1809,23 +2026,48 @@ function AdminFleet({db,updateDB}){
 
   const setStatus=(id,status)=>updateDB(db=>{const t=db.trailers.find(x=>x.id===id);if(t)t.status=status;return db;});
 
+  const [confirmDelete,setConfirmDelete]=useState(null);
+  const deleteTrailer=(id)=>{
+    updateDB(db=>{
+      db.trailers=db.trailers.filter(t=>t.id!==id);
+      return db;
+    });
+    setConfirmDelete(null);
+  };
+
+  const STATUS_OPTIONS=[
+    ["available",t("available",lang),C.good],
+    ["rented",t("rented",lang),C.gold],
+    ["rent-to-own",t("rent-to-own",lang),C.gold],
+    ["maintenance",t("maintenance",lang),C.warn],
+    ["pending",t("pending",lang),C.blue],
+    ["not-available",t("not-available",lang),C.chromeDim],
+    ["sold",t("sold",lang),C.danger],
+  ];
+  const statusMeta=(st)=>STATUS_OPTIONS.find(([v])=>v===st)||STATUS_OPTIONS[0];
+
   const filtered=filter==="all"?db.trailers:db.trailers.filter(t=>t.status===filter);
-  const counts={all:db.trailers.length,available:db.trailers.filter(t=>t.status==="available").length,rented:db.trailers.filter(t=>t.status==="rented").length,maintenance:db.trailers.filter(t=>t.status==="maintenance").length};
+  const counts={all:db.trailers.length};
+  STATUS_OPTIONS.forEach(([v])=>{counts[v]=db.trailers.filter(t=>t.status===v).length;});
 
   return(
     <div style={{display:"flex",flexDirection:"column",gap:12}} className="fadein">
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <div style={{...s.heading,fontSize:20,fontWeight:700}}>Fleet</div>
+        <div style={{...s.heading,fontSize:20,fontWeight:700}}>{t("fleet",lang)}</div>
         <button onClick={()=>setAdding(!adding)} style={{...s.btnGold,width:"auto",padding:"9px 14px",display:"flex",alignItems:"center",gap:6}}>
-          <Icon d={ICONS.plus} size={13}/> Add
+          <Icon d={ICONS.plus} size={13}/> {t("add",lang)}
         </button>
       </div>
 
       {/* filter tabs */}
       <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-        {[["all","All"],["available","Available"],["rented","Rented"],["maintenance","In Repair"]].map(([v,l])=>(
+        <button onClick={()=>setFilter("all")}
+          style={{padding:"6px 12px",borderRadius:99,border:`1px solid ${filter==="all"?C.gold:C.line}`,background:filter==="all"?C.gold+"22":"transparent",color:filter==="all"?C.gold:C.chromeDim,fontSize:11,...s.mono,cursor:"pointer"}}>
+          {t("all",lang)} <span style={{opacity:0.7}}>({counts.all})</span>
+        </button>
+        {STATUS_OPTIONS.map(([v,l,col])=>(
           <button key={v} onClick={()=>setFilter(v)}
-            style={{padding:"6px 12px",borderRadius:99,border:`1px solid ${filter===v?C.gold:C.line}`,background:filter===v?C.gold+"22":"transparent",color:filter===v?C.gold:C.chromeDim,fontSize:11,...s.mono,cursor:"pointer"}}>
+            style={{padding:"6px 12px",borderRadius:99,border:`1px solid ${filter===v?col:C.line}`,background:filter===v?col+"22":"transparent",color:filter===v?col:C.chromeDim,fontSize:11,...s.mono,cursor:"pointer"}}>
             {l} <span style={{opacity:0.7}}>({counts[v]})</span>
           </button>
         ))}
@@ -1851,7 +2093,7 @@ function AdminFleet({db,updateDB}){
       {filtered.length===0&&<div style={{color:C.chromeDim,fontSize:13}}>No trailers in this category.</div>}
       {filtered.map(t=>{
         const tenant=db.tenants.find(x=>x.trailerId===t.id);
-        const statusColor=t.status==="available"?C.good:t.status==="rented"?C.gold:C.warn;
+        const [,,statusColor]=statusMeta(t.status);
         const inlinePhotoRef=React.createRef();
         return(
           <div key={t.id} style={{...s.card,padding:0,overflow:"hidden"}}>
@@ -1859,7 +2101,7 @@ function AdminFleet({db,updateDB}){
             <div style={{position:"relative",width:"100%",height:t.photo?160:0,overflow:"hidden",background:C.ink2}}>
               {t.photo&&<img src={t.photo} alt={t.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>}
               {t.photo&&<div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,transparent 50%,rgba(0,0,0,0.6))"}}/>}
-              <span style={{position:"absolute",top:10,right:10}}><Pill color={statusColor}>{t.status}</Pill></span>
+              <span style={{position:"absolute",top:10,right:10}}><Pill color={statusColor}>{statusMeta(t.status)[1]}</Pill></span>
             </div>
             <div style={{padding:"14px 16px"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
@@ -1869,7 +2111,7 @@ function AdminFleet({db,updateDB}){
                   {t.purchasePrice>0&&<div style={{fontSize:11,color:C.chromeDim}}>Purchase price: {fmt$(t.purchasePrice)}</div>}
                   {tenant&&<div style={{fontSize:12,color:C.gold,marginTop:4}}>Rented by: {tenant.name}</div>}
                 </div>
-                {!t.photo&&<Pill color={statusColor}>{t.status}</Pill>}
+                {!t.photo&&<Pill color={statusColor}>{statusMeta(t.status)[1]}</Pill>}
               </div>
               {/* photo upload button */}
               <input type="file" accept="image/*" style={{display:"none"}} ref={inlinePhotoRef} onChange={e=>updateTrailerPhoto(t.id,e.target.files[0])}/>
@@ -1878,12 +2120,26 @@ function AdminFleet({db,updateDB}){
               </button>
               {/* status buttons */}
               <div style={{display:"flex",gap:6,marginTop:8,flexWrap:"wrap"}}>
-                {[["available",C.good],["rented",C.gold],["maintenance",C.warn]].map(([st,col])=>(
+                {STATUS_OPTIONS.map(([st,label,col])=>(
                   <button key={st} onClick={()=>setStatus(t.id,st)}
                     style={{padding:"5px 11px",borderRadius:3,border:`1px solid ${t.status===st?col:C.line}`,background:t.status===st?col+"22":"transparent",color:t.status===st?col:C.chromeDim,fontSize:10,...s.mono,cursor:"pointer"}}>
-                    {st}
+                    {label}
                   </button>
                 ))}
+              </div>
+              {/* delete */}
+              <div style={{marginTop:10,paddingTop:10,borderTop:`1px solid ${C.line}`}}>
+                {confirmDelete===t.id ? (
+                  <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                    <span style={{fontSize:11,color:C.danger,flex:1}}>Delete this trailer permanently?</span>
+                    <button onClick={()=>deleteTrailer(t.id)} style={{background:C.danger,color:"#fff",border:"none",borderRadius:3,padding:"6px 12px",fontSize:10,...s.mono,cursor:"pointer"}}>Yes, Delete</button>
+                    <button onClick={()=>setConfirmDelete(null)} style={{background:"none",border:`1px solid ${C.line}`,color:C.chromeDim,borderRadius:3,padding:"6px 12px",fontSize:10,...s.mono,cursor:"pointer"}}>Cancel</button>
+                  </div>
+                ) : (
+                  <button onClick={()=>setConfirmDelete(t.id)} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",color:C.danger,fontSize:11,...s.mono,cursor:"pointer",padding:0}}>
+                    <Icon d={ICONS.trash} size={13}/> Delete Trailer
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -1892,4 +2148,3 @@ function AdminFleet({db,updateDB}){
     </div>
   );
 }
-

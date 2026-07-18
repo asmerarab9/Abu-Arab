@@ -259,7 +259,7 @@ const ICONS={
 };
 
 /* ── Notifications panel — a real openable list, not just a silent mark-all-read ── */
-function NotificationsPanel({notifs, onClose, onMarkRead, onMarkAllRead}){
+function NotificationsPanel({notifs, onClose, onMarkRead, onMarkAllRead, onDelete}){
   return(
     <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:200,display:"flex",alignItems:"flex-start",justifyContent:"center",padding:"70px 16px 16px"}}>
       <div onClick={e=>e.stopPropagation()} style={{background:C.steel,border:`1px solid ${C.lineBright}`,borderRadius:8,width:"100%",maxWidth:420,maxHeight:"75vh",display:"flex",flexDirection:"column",overflow:"hidden"}}>
@@ -273,20 +273,23 @@ function NotificationsPanel({notifs, onClose, onMarkRead, onMarkAllRead}){
           {notifs.length===0 ? (
             <div style={{padding:"36px 20px",textAlign:"center",color:C.chromeDim,fontSize:13}}>No notifications yet.</div>
           ) : notifs.map(n=>(
-            <div key={n.id} onClick={()=>!n.read&&onMarkRead(n.id)}
-              style={{padding:"12px 16px",borderBottom:`1px solid ${C.line}`,cursor:n.read?"default":"pointer",background:n.read?"transparent":C.blueBg,display:"flex",gap:10,alignItems:"flex-start"}}>
-              <span style={{fontSize:16,flexShrink:0,marginTop:1}}>{n.read?"·":"🔔"}</span>
-              <div style={{flex:1}}>
+            <div key={n.id}
+              style={{padding:"12px 16px",borderBottom:`1px solid ${C.line}`,background:n.read?"transparent":C.blueBg,display:"flex",gap:10,alignItems:"flex-start"}}>
+              <span onClick={()=>!n.read&&onMarkRead(n.id)} style={{fontSize:16,flexShrink:0,marginTop:1,cursor:n.read?"default":"pointer"}}>{n.read?"·":"🔔"}</span>
+              <div onClick={()=>!n.read&&onMarkRead(n.id)} style={{flex:1,cursor:n.read?"default":"pointer"}}>
                 <div style={{fontSize:13,fontWeight:n.read?400:600,color:n.read?C.chromeDim:C.paper}}>{n.title}</div>
                 <div style={{fontSize:12,color:C.chromeDim,marginTop:2}}>{n.body}</div>
                 <div style={{fontSize:10,...s.mono,color:C.chromeDim,marginTop:4}}>{fmtDate(n.date)}</div>
               </div>
+              <button onClick={()=>onDelete(n.id)} title="Delete" style={{background:"none",border:"none",color:C.chromeDim,padding:4,cursor:"pointer",flexShrink:0}}>
+                <Icon d={ICONS.trash} size={14}/>
+              </button>
             </div>
           ))}
         </div>
-        {notifs.some(n=>!n.read)&&(
-          <div style={{padding:"10px 16px",borderTop:`1px solid ${C.line}`}}>
-            <button onClick={onMarkAllRead} style={{...s.btnOut,width:"100%",padding:"9px"}}>Mark all as read</button>
+        {notifs.length>0&&(
+          <div style={{padding:"10px 16px",borderTop:`1px solid ${C.line}`,display:"flex",gap:8}}>
+            {notifs.some(n=>!n.read)&&<button onClick={onMarkAllRead} style={{...s.btnOut,flex:1,padding:"9px"}}>Mark all as read</button>}
           </div>
         )}
       </div>
@@ -619,6 +622,7 @@ function TenantApp({db,updateDB,tenantId,onLogout,refreshNow}){
   const [showNotifs,setShowNotifs]=useState(false);
   const markRead=(id)=>updateDB(db=>{db.notifications=db.notifications.map(n=>n.id===id?{...n,read:true}:n);return db;});
   const markAllRead=()=>updateDB(db=>{db.notifications=db.notifications.map(n=>(n.forTenantId===tenantId||n.forRole==="tenant")?{...n,read:true}:n);return db;});
+  const deleteNotif=(id)=>updateDB(db=>{db.notifications=db.notifications.filter(n=>n.id!==id);return db;});
   const pendingPay=myPayments.find(p=>p.status==="pending");
 
   const tabs=[
@@ -660,7 +664,7 @@ function TenantApp({db,updateDB,tenantId,onLogout,refreshNow}){
         </div>
       </div>
 
-      {showNotifs&&<NotificationsPanel notifs={allMyNotifs} onClose={()=>setShowNotifs(false)} onMarkRead={markRead} onMarkAllRead={markAllRead}/>}
+      {showNotifs&&<NotificationsPanel notifs={allMyNotifs} onClose={()=>setShowNotifs(false)} onMarkRead={markRead} onMarkAllRead={markAllRead} onDelete={deleteNotif}/>}
 
       <div style={{flex:1,overflowY:"auto",padding:"18px 16px 80px"}}>
         {tab==="home"     &&<TenantHome tenant={tenant} trailer={trailer} myPayments={myPayments} pendingPay={pendingPay} setTab={setTab} myNotifs={myNotifs} db={db} updateDB={updateDB} tenantId={tenantId} lang={lang}/>}
@@ -815,6 +819,7 @@ function StatMini({label,val}){
 function TenantPayments({myPayments,tenant,pendingPay,db,updateDB,tenantId,lang}){
   
   const [notifSent,setNotifSent]=useState(false);
+  const [openingZelle,setOpeningZelle]=useState(false);
 
   const notifyAfterPay=()=>{
     updateDB(db=>{
@@ -822,6 +827,15 @@ function TenantPayments({myPayments,tenant,pendingPay,db,updateDB,tenantId,lang}
       return db;
     });
     setNotifSent(true);
+  };
+
+  const openZelleApp=(amount)=>{
+    setOpeningZelle(true);
+    const zelleUrl=`zelle://send?amount=${amount}&recipient=${OWNER_ZELLE.replace(/\D/g,"")}&memo=${encodeURIComponent(pendingPay?.note||"Rent payment")}`;
+    setTimeout(()=>{
+      window.location.href=zelleUrl;
+      setTimeout(()=>setOpeningZelle(false),1800);
+    },650);
   };
 
   return(
@@ -862,9 +876,12 @@ function TenantPayments({myPayments,tenant,pendingPay,db,updateDB,tenantId,lang}
                 <div style={{fontSize:15,fontWeight:600,color:C.paper,marginTop:2}}>{OWNER_ZELLE}</div>
                 <div style={{fontSize:11,color:C.chromeDim,marginTop:1}}>Abu Arab Trailer Solution</div>
               </div>
-              <a href={`zelle://pay`} style={{background:"#6B1FCD",color:"#fff",border:"none",borderRadius:4,padding:"10px 14px",fontSize:12,fontWeight:700,...s.mono,textDecoration:"none",display:"flex",alignItems:"center",gap:6,whiteSpace:"nowrap"}}>
-                {t("openZelle",lang)}
-              </a>
+              <button onClick={()=>openZelleApp(pendingPay.amount)} disabled={openingZelle}
+                style={{background:"#6B1FCD",color:"#fff",border:"none",borderRadius:4,padding:"10px 14px",fontSize:12,fontWeight:700,...s.mono,display:"flex",alignItems:"center",gap:6,whiteSpace:"nowrap",cursor:"pointer",position:"relative",overflow:"hidden"}}>
+                {openingZelle ? (
+                  <><span style={{width:12,height:12,border:"2px solid rgba(255,255,255,0.4)",borderTopColor:"#fff",borderRadius:"50%",animation:"spin 0.7s linear infinite",display:"inline-block"}}/> Opening…</>
+                ) : t("openZelle",lang)}
+              </button>
             </div>
             <div style={{marginTop:10,padding:"10px 14px",background:C.blueBg,border:`1px solid ${C.blue}44`,borderRadius:5}}>
               <div style={{fontSize:12,color:C.paper,marginBottom:8}}>After sending payment, tap below to notify Abu Arab:</div>
@@ -1380,6 +1397,7 @@ function AdminApp({db,updateDB,onLogout,refreshNow}){
 
   const markRead=(id)=>updateDB(db=>{db.notifications=db.notifications.map(n=>n.id===id?{...n,read:true}:n);return db;});
   const markAllRead=()=>updateDB(db=>{db.notifications=db.notifications.map(n=>n.forRole==="admin"?{...n,read:true}:n);return db;});
+  const deleteNotif=(id)=>updateDB(db=>{db.notifications=db.notifications.filter(n=>n.id!==id);return db;});
   const tabs=[
     {id:"dashboard",icon:ICONS.home,label:t("overview",lang)},
     {id:"tenants",icon:ICONS.user,label:t("tenants",lang)},
@@ -1431,7 +1449,7 @@ function AdminApp({db,updateDB,onLogout,refreshNow}){
         </div>
       )}
 
-      {showNotifs&&<NotificationsPanel notifs={allNotifs} onClose={()=>setShowNotifs(false)} onMarkRead={markRead} onMarkAllRead={markAllRead}/>}
+      {showNotifs&&<NotificationsPanel notifs={allNotifs} onClose={()=>setShowNotifs(false)} onMarkRead={markRead} onMarkAllRead={markAllRead} onDelete={deleteNotif}/>}
 
       <div style={{flex:1,overflowY:"auto",padding:"16px 14px 80px"}}>
         {tab==="dashboard"&&<AdminDashboard db={db} updateDB={updateDB} setTab={setTab} lang={lang}/>}
@@ -1555,6 +1573,7 @@ function StatCard({val,label,warn}){
 function AdminTenants({db,updateDB,lang}){
   const [view,setView]=useState("list");
   const [sel,setSel]=useState(null);
+  const [editingId,setEditingId]=useState(null);
   const [form,setForm]=useState({name:"",phone:"",email:"",pin:"1234",trailerId:"",startDate:"",endDate:"",monthlyRate:"",creditRate:"15",securityDeposit:""});
   const fileRef=useRef();
   const [uploading,setUploading]=useState(false);
@@ -1584,6 +1603,35 @@ function AdminTenants({db,updateDB,lang}){
       return db;
     });
     setView("list");setForm({name:"",phone:"",email:"",pin:"1234",trailerId:"",startDate:"",endDate:"",monthlyRate:"",creditRate:"15",securityDeposit:""});
+  };
+
+  const editTenant=()=>{
+    if(!form.name||!form.phone||!editingId)return;
+    updateDB(db=>{
+      const idx=db.tenants.findIndex(x=>x.id===editingId);
+      if(idx===-1) return db;
+      const prevTrailerId=db.tenants[idx].trailerId;
+      const updated={
+        ...db.tenants[idx],
+        ...form,
+        monthlyRate:Number(form.monthlyRate),
+        creditRate:Number(form.creditRate),
+        securityDeposit:Number(form.securityDeposit||0),
+      };
+      db.tenants[idx]=updated;
+      // keep trailer statuses correct if the assigned trailer changed
+      if(prevTrailerId && prevTrailerId!==form.trailerId){
+        const oldTr=db.trailers.find(x=>x.id===prevTrailerId);
+        if(oldTr) oldTr.status="available";
+      }
+      if(form.trailerId){
+        const newTr=db.trailers.find(x=>x.id===form.trailerId);
+        if(newTr) newTr.status="rented";
+      }
+      return db;
+    });
+    setView("list");setEditingId(null);
+    setForm({name:"",phone:"",email:"",pin:"1234",trailerId:"",startDate:"",endDate:"",monthlyRate:"",creditRate:"15",securityDeposit:""});
   };
 
   const deleteTenant=(id)=>{
@@ -1780,11 +1828,44 @@ function AdminTenants({db,updateDB,lang}){
         )}
 
         <div style={{display:"flex",gap:8,marginTop:4}}>
+          <button onClick={()=>{
+            setForm({
+              name:sel.name||"",phone:sel.phone||"",email:sel.email||"",pin:sel.pin||"1234",
+              trailerId:sel.trailerId||"",startDate:sel.startDate||"",endDate:sel.endDate||"",
+              monthlyRate:String(sel.monthlyRate||""),creditRate:String(sel.creditRate||"15"),
+              securityDeposit:String(sel.securityDeposit||""),
+            });
+            setEditingId(sel.id);
+            setView("edit");
+          }} style={{...s.btnOut,flex:1}}>Edit Tenant</button>
           <button onClick={()=>deleteTenant(sel.id)} style={{...s.btnOut,flex:1,color:C.danger,borderColor:C.danger+"44"}}>Delete Tenant</button>
         </div>
       </div>
     );
   }
+
+  if(view==="edit") return(
+    <div style={{display:"flex",flexDirection:"column",gap:12}} className="fadein">
+      <button onClick={()=>{setView("detail");setEditingId(null);}} style={{...s.btnOut,display:"flex",alignItems:"center",gap:6,width:"auto",padding:"8px 12px"}}>
+        <Icon d={ICONS.back} size={14}/> Back
+      </button>
+      <div style={{...s.heading,fontSize:18,fontWeight:700}}>Edit Tenant</div>
+      {[["name","Full Name","text"],["phone","Phone","tel"],["email","Email","email"],["pin","PIN (4 digits)","password"],["monthlyRate","Monthly Rate ($)","number"],["creditRate","Rent-to-Own Credit Rate (%)","number"],["securityDeposit","Security Deposit ($)","number"],["startDate","Start Date","date"],["endDate","End Date","date"]].map(([k,l,ty])=>(
+        <div key={k}>
+          <label style={s.label}>{l}</label>
+          <input style={s.input} type={ty} value={form[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={k==="creditRate"?"e.g. 15":k==="pin"?"e.g. 1234":""}/>
+        </div>
+      ))}
+      <div>
+        <label style={s.label}>Assign Trailer</label>
+        <select style={s.input} value={form.trailerId} onChange={e=>setForm(f=>({...f,trailerId:e.target.value}))}>
+          <option value="">— None —</option>
+          {db.trailers.filter(t=>t.status==="available"||t.id===form.trailerId).map(t=><option key={t.id} value={t.id}>{t.name}</option>)}
+        </select>
+      </div>
+      <button style={s.btnGold} onClick={editTenant}>Save Changes</button>
+    </div>
+  );
 
   if(view==="add") return(
     <div style={{display:"flex",flexDirection:"column",gap:12}} className="fadein">

@@ -1120,7 +1120,7 @@ function PublicLanding({db,updateDB,onLogin}){
   const [inquiry,setInquiry]=useState(null); // trailer object or {name:"General"}
   const [detail,setDetail]=useState(null);   // trailer being viewed in 3D detail
   const [applyFor,setApplyFor]=useState(null); // null | "" (general) | trailerId
-  const trailers=db.trailers||[];
+  const trailers=(db.trailers||[]).filter(t=>!t.archived);
 
   const logInquiry=(trailer,channel)=>{
     updateDB(d=>addNotification(d,{forRole:"admin",title:"New Public Inquiry",body:`Website visitor is asking about ${trailer.name} (via ${channel}).`}));
@@ -2435,6 +2435,7 @@ function IdPhotoViewer({appId}){
 function AdminTenants({db,updateDB,lang}){
   const [view,setView]=useState("list");
   const [sel,setSel]=useState(null);
+  const [showArchived,setShowArchived]=useState(false);
   const [editingId,setEditingId]=useState(null);
   const [form,setForm]=useState({name:"",phone:"",email:"",pin:"1234",trailerId:"",startDate:"",endDate:"",monthlyRate:"",creditRate:"15",securityDeposit:"",lateFee:""});
   const pendingApps=(db.applications||[]).filter(a=>a.status==="pending");
@@ -2552,6 +2553,14 @@ function AdminTenants({db,updateDB,lang}){
       db.tenants=db.tenants.filter(t=>t.id!==id);
       db.payments=db.payments.filter(p=>p.tenantId!==id);
       db.contracts=db.contracts.filter(c=>c.tenantId!==id);
+      return db;
+    });
+    setView("list");
+  };
+  const archiveTenant=(id,on,reason)=>{
+    updateDB(db=>{
+      const t=db.tenants.find(x=>x.id===id);
+      if(t){ t.archived=on; if(on){ t.archiveReason=reason||"completed"; t.archivedDate=today(); if(t.trailerId){const tr=db.trailers.find(x=>x.id===t.trailerId); if(tr&&!tr.archived) tr.status="rent-sale";} } }
       return db;
     });
     setView("list");
@@ -2773,6 +2782,15 @@ function AdminTenants({db,updateDB,lang}){
         <button onClick={()=>setView("legal")} style={{...s.btnOut,width:"100%",marginTop:8,display:"flex",alignItems:"center",justifyContent:"center",gap:7,color:C.warn,borderColor:C.warn+"55"}}>
           <Icon d={ICONS.contract} size={15} color={C.warn}/> Legal / Small Claims
         </button>
+        {sel.archived?(
+          <button onClick={()=>archiveTenant(sel.id,false)} style={{...s.btnOut,width:"100%",marginTop:8,color:C.good,borderColor:C.good+"55"}}>↩ Restore from Archive</button>
+        ):(
+          <div style={{display:"flex",gap:8,marginTop:8}}>
+            <button onClick={()=>archiveTenant(sel.id,true,"completed")} style={{...s.btnOut,flex:1,color:C.good,borderColor:C.good+"55",fontSize:12}}>✓ Ended — Archive</button>
+            <button onClick={()=>archiveTenant(sel.id,true,"broke")} style={{...s.btnOut,flex:1,color:C.danger,borderColor:C.danger+"55",fontSize:12}}>✗ Broke Contract — Archive</button>
+          </div>
+        )}
+        {sel.archived&&<div style={{fontSize:11,color:sel.archiveReason==="broke"?C.danger:C.chromeDim,marginTop:6,...s.mono}}>Archived — {sel.archiveReason==="broke"?"broke the contract":"contract ended"}{sel.archivedDate?` · ${fmtDate(sel.archivedDate)}`:""}</div>}
       </div>
     );
   }
@@ -2936,8 +2954,18 @@ function AdminTenants({db,updateDB,lang}){
         </div>
       )}
 
-      {db.tenants.length===0&&<div style={{color:C.chromeDim,fontSize:13}}>No tenants yet.</div>}
-      {db.tenants.map(t=>{
+      {/* Active / Archive toggle */}
+      <div style={{display:"flex",gap:6}}>
+        <button onClick={()=>setShowArchived(false)} style={{padding:"6px 14px",borderRadius:99,border:`1px solid ${!showArchived?C.gold:C.line}`,background:!showArchived?C.gold+"22":"transparent",color:!showArchived?C.gold:C.chromeDim,fontSize:11,...s.mono,cursor:"pointer"}}>
+          Active ({db.tenants.filter(x=>!x.archived).length})
+        </button>
+        <button onClick={()=>setShowArchived(true)} style={{padding:"6px 14px",borderRadius:99,border:`1px solid ${showArchived?C.warn:C.line}`,background:showArchived?C.warn+"22":"transparent",color:showArchived?C.warn:C.chromeDim,fontSize:11,...s.mono,cursor:"pointer"}}>
+          🗄 Archive ({db.tenants.filter(x=>x.archived).length})
+        </button>
+      </div>
+
+      {db.tenants.filter(x=>!!x.archived===showArchived).length===0&&<div style={{color:C.chromeDim,fontSize:13}}>{showArchived?"No archived tenants.":"No active tenants yet."}</div>}
+      {db.tenants.filter(x=>!!x.archived===showArchived).map(t=>{
         const tr=db.trailers.find(x=>x.id===t.trailerId);
         const hasPending=db.payments.some(p=>p.tenantId===t.id&&p.status==="pending");
         const hasMaint=allMaint.some(r=>r.tenantId===t.id&&r.status==="pending");
@@ -2949,6 +2977,7 @@ function AdminTenants({db,updateDB,lang}){
               <div style={{fontWeight:600,fontSize:14}}>{t.name}</div>
               <div style={{fontSize:11,color:C.chromeDim,marginTop:3}}>{t.phone} · {tr?.name||"No trailer"}</div>
               <div style={{display:"flex",gap:6,marginTop:6,flexWrap:"wrap"}}>
+                {t.archived&&<Pill color={t.archiveReason==="broke"?C.danger:C.chromeDim}>{t.archiveReason==="broke"?"Broke contract":"Ended"}</Pill>}
                 {hasPending&&<Pill color={C.warn}>Payment due</Pill>}
                 {hasMaint&&<Pill color={C.warn}>Maintenance</Pill>}
                 {hasTrans&&<Pill color={C.blue}>Transport req.</Pill>}
@@ -4083,29 +4112,72 @@ function AdminForms({lang}){
 
 /* ── Admin Fleet ─────────────────────────────────────────── */
 
+// Smart trailer spec field sets (reused by Add + Edit)
+const FLEET_BASIC=[["name","Trailer Name","text"],["year","Year","number"],["length","Length (ft)","text"],["color","Color","text"],["nickname","Nickname (auto below)","text"],["vin","VIN Number","text"],["plate","License Plate","text"],["hoodSize","Hood Size (ft)","number"]];
+const FLEET_PRICING=[["dailyRate","Daily Rate ($)","number"],["monthlyRate","Monthly Rent ($)","number"],["purchasePrice","Sale Price ($)","number"],["rtoMonths","Rent-to-Own Term (months)","number"],["replacementValue","Replacement Value ($)","number"],["securityDeposit","Security Deposit ($)","number"]];
+const FLEET_DATES=[["regStickerDate","Registration Sticker Expiry"],["fireSuppressionInspDate","Fire Suppression Inspection"],["fireExtinguisherInspDate","Fire Extinguisher Inspection"]];
+const FLEET_EQUIP=[["griddle","Flat-top Griddle"],["charbroiler","Char-broiler"],["fryer","Deep Fryer"],["range","Range / Burners"],["fridge","Refrigerator"],["freezer","Deep Freezer"],["preptable","Prep Table"],["sink3","3-Compartment Sink"],["handsink","Hand-wash Sink"],["hood","Exhaust Hood"],["firesupp","Fire Suppression System"],["grease","Grease Trap"],["waterheater","Water Heater"],["freshtank","Fresh Water Tank"],["greytank","Grey Water Tank"],["propane","Propane System"],["generator","Generator"],["shorepower","Shore Power / Electrical Panel"],["hvac","A/C & Heating"],["window","Serving Window"],["warming","Warming / Holding Cabinet"],["steamtable","Steam Table"]];
+const composeEquipment=(equip,notes)=>{
+  const on=FLEET_EQUIP.filter(([k])=>equip&&equip[k]).map(([,l])=>l);
+  return [on.join(", "),(notes||"").trim()].filter(Boolean).join(on.length&&notes?" · ":"");
+};
+// Inspection / registration tracking: returns {label,color} for a date
+function inspStatus(dateStr){
+  if(!dateStr) return {txt:"— not set —",color:C.chromeDim};
+  const d=new Date(dateStr+"T00:00:00"); const days=Math.round((d-new Date())/86400000);
+  if(days<0) return {txt:`EXPIRED ${Math.abs(days)}d ago`,color:C.danger};
+  if(days<=30) return {txt:`due in ${days}d`,color:C.warn};
+  return {txt:`OK · ${days}d left`,color:C.good};
+}
+
 function AdminFleet({db,updateDB,lang}){
   const [filter,setFilter]=useState("all");
   const [adding,setAdding]=useState(false);
-  const EMPTY_FORM={name:"",nickname:"",color:"",info:"",length:"",power:"",kitchen:"",fridge:"",dailyRate:"",monthlyRate:"",purchasePrice:"",replacementValue:"",securityDeposit:"",equipment:"",vin:"",year:"",photos:[],photoNames:[]};
+  const [editingId,setEditingId]=useState(null);
+  const EMPTY_FORM={name:"",nickname:"",color:"",info:"",length:"",power:"",kitchen:"",fridge:"",dailyRate:"",monthlyRate:"",purchasePrice:"",rtoMonths:"",replacementValue:"",securityDeposit:"",equipment:"",equip:{},equipmentNotes:"",vin:"",plate:"",year:"",hoodSize:"",regStickerDate:"",fireSuppressionInspDate:"",fireExtinguisherInspDate:"",photos:[],photoNames:[]};
   const [form,setForm]=useState(EMPTY_FORM);
   const [busyPhoto,setBusyPhoto]=useState("");
-
   const photoRef=useRef();
-  const addTrailer=async()=>{
+
+  const startAdd=()=>{ setEditingId(null); setForm(EMPTY_FORM); setAdding(true); };
+  const startEdit=(tr)=>{
+    setAdding(false); setEditingId(tr.id);
+    setForm({...EMPTY_FORM,...tr,
+      dailyRate:String(tr.dailyRate||""),monthlyRate:String(tr.monthlyRate||""),purchasePrice:String(tr.purchasePrice||""),rtoMonths:String(tr.rtoMonths||""),
+      replacementValue:String(tr.replacementValue||""),securityDeposit:String(tr.securityDeposit||""),hoodSize:String(tr.hoodSize||""),year:String(tr.year||""),
+      equip:tr.equip||{},equipmentNotes:tr.equipmentNotes||"",photos:tr.photos||[],photoNames:tr.photoNames||[]});
+  };
+  const cancelForm=()=>{ setAdding(false); setEditingId(null); setForm(EMPTY_FORM); };
+
+  const num=k=>Number(form[k])||0;
+  const saveTrailer=async()=>{
     if(!form.name)return;
-    const id="T"+uid();
-    // save photos externally with indexes
-    for(let i=0;i<(form.photos||[]).length;i++){ await saveFileChunked("trailer_photo:"+id+":"+i, form.photos[i]); }
-    if(form.photos.length) photoCache[id]={key:id+":"+form.photos.length+":"+form.photoNames.join("|"),photos:form.photos};
-    const t={id,name:form.name,nickname:form.nickname||autoNickname(form.length,form.color),color:form.color,info:form.info,length:form.length,power:form.power,kitchen:form.kitchen,fridge:form.fridge,
-      dailyRate:Number(form.dailyRate)||0,monthlyRate:Number(form.monthlyRate)||0,purchasePrice:Number(form.purchasePrice)||0,
-      replacementValue:Number(form.replacementValue)||0,securityDeposit:Number(form.securityDeposit)||0,equipment:form.equipment||"",vin:form.vin||"",year:form.year||"",
-      status:"rent-sale",views:0,photoCount:form.photos.length,photoNames:form.photoNames,photos:form.photos};
-    updateDB(db=>{db.trailers=[...db.trailers,t];return db;});
-    setAdding(false);setForm(EMPTY_FORM);
+    const equipStr=composeEquipment(form.equip,form.equipmentNotes)||form.equipment||"";
+    if(editingId){
+      updateDB(db=>{const x=db.trailers.find(y=>y.id===editingId); if(x){
+        Object.assign(x,{name:form.name,nickname:form.nickname||autoNickname(form.length,form.color),color:form.color,info:form.info,length:form.length,
+          power:form.power,kitchen:form.kitchen,fridge:form.fridge,vin:form.vin,plate:form.plate,year:form.year,hoodSize:num("hoodSize"),
+          dailyRate:num("dailyRate"),monthlyRate:num("monthlyRate"),purchasePrice:num("purchasePrice"),rtoMonths:num("rtoMonths"),
+          replacementValue:num("replacementValue"),securityDeposit:num("securityDeposit"),
+          equip:form.equip,equipmentNotes:form.equipmentNotes,equipment:equipStr,
+          regStickerDate:form.regStickerDate,fireSuppressionInspDate:form.fireSuppressionInspDate,fireExtinguisherInspDate:form.fireExtinguisherInspDate});
+      } return db;});
+    } else {
+      const id="T"+uid();
+      for(let i=0;i<(form.photos||[]).length;i++){ await saveFileChunked("trailer_photo:"+id+":"+i, form.photos[i]); }
+      if(form.photos.length) photoCache[id]={key:id+":"+form.photos.length+":"+form.photoNames.join("|"),photos:form.photos};
+      const t={id,name:form.name,nickname:form.nickname||autoNickname(form.length,form.color),color:form.color,info:form.info,length:form.length,
+        power:form.power,kitchen:form.kitchen,fridge:form.fridge,vin:form.vin,plate:form.plate,year:form.year,hoodSize:num("hoodSize"),
+        dailyRate:num("dailyRate"),monthlyRate:num("monthlyRate"),purchasePrice:num("purchasePrice"),rtoMonths:num("rtoMonths"),
+        replacementValue:num("replacementValue"),securityDeposit:num("securityDeposit"),
+        equip:form.equip,equipmentNotes:form.equipmentNotes,equipment:equipStr,
+        regStickerDate:form.regStickerDate,fireSuppressionInspDate:form.fireSuppressionInspDate,fireExtinguisherInspDate:form.fireExtinguisherInspDate,
+        status:"rent-sale",views:0,photoCount:form.photos.length,photoNames:form.photoNames,photos:form.photos};
+      updateDB(db=>{db.trailers=[...db.trailers,t];return db;});
+    }
+    cancelForm();
   };
 
-  // multi-file picker for the ADD form (holds photos in memory until saved)
   const pickPhotos=async(e)=>{
     const files=Array.from(e.target.files||[]); if(!files.length) return;
     setBusyPhoto("form");
@@ -4116,7 +4188,6 @@ function AdminFleet({db,updateDB,lang}){
   };
   const removeFormPhoto=(i)=>setForm(f=>({...f,photos:f.photos.filter((_,x)=>x!==i),photoNames:f.photoNames.filter((_,x)=>x!==i)}));
 
-  // add photos to an EXISTING trailer
   const addTrailerPhotos=async(id,fileList)=>{
     const files=Array.from(fileList||[]); if(!files.length) return;
     setBusyPhoto(id);
@@ -4137,15 +4208,10 @@ function AdminFleet({db,updateDB,lang}){
   };
 
   const setStatus=(id,status)=>updateDB(db=>{const t=db.trailers.find(x=>x.id===id);if(t)t.status=status;return db;});
+  const archiveTrailer=(id,on)=>updateDB(db=>{const t=db.trailers.find(x=>x.id===id);if(t){t.archived=on;if(on)t.status="sold";}return db;});
 
   const [confirmDelete,setConfirmDelete]=useState(null);
-  const deleteTrailer=(id)=>{
-    updateDB(db=>{
-      db.trailers=db.trailers.filter(t=>t.id!==id);
-      return db;
-    });
-    setConfirmDelete(null);
-  };
+  const deleteTrailer=(id)=>{ updateDB(db=>{db.trailers=db.trailers.filter(t=>t.id!==id);return db;}); setConfirmDelete(null); };
 
   const STATUS_OPTIONS=[
     ["rent","Available for rent only",C.good],
@@ -4156,15 +4222,85 @@ function AdminFleet({db,updateDB,lang}){
   ];
   const statusMeta=(st)=>STATUS_OPTIONS.find(([v])=>v===st)||STATUS_OPTIONS[0];
 
-  const filtered=filter==="all"?db.trailers:db.trailers.filter(t=>t.status===filter);
-  const counts={all:db.trailers.length};
-  STATUS_OPTIONS.forEach(([v])=>{counts[v]=db.trailers.filter(t=>t.status===v).length;});
+  const active=db.trailers.filter(t=>!t.archived);
+  const archivedList=db.trailers.filter(t=>t.archived);
+  const filtered=filter==="archive"?archivedList:(filter==="all"?active:active.filter(t=>t.status===filter));
+  const counts={all:active.length,archive:archivedList.length};
+  STATUS_OPTIONS.forEach(([v])=>{counts[v]=active.filter(t=>t.status===v).length;});
+
+  const setField=(k,v)=>setForm(f=>({...f,[k]:v}));
+  const toggleEquip=k=>setForm(f=>({...f,equip:{...f.equip,[k]:!f.equip?.[k]}}));
+
+  // the shared Add/Edit form
+  const renderForm=()=>(
+    <div style={{...s.card,display:"flex",flexDirection:"column",gap:10}}>
+      <div style={{...s.mono,fontSize:11,color:C.gold,letterSpacing:"0.08em",textTransform:"uppercase"}}>{editingId?"Edit Trailer":"Add Trailer"}</div>
+      {FLEET_BASIC.map(([k,l,ty])=>(
+        <div key={k}><label style={s.label}>{l}</label><input style={s.input} type={ty} value={form[k]||""} onChange={e=>setField(k,e.target.value)}/></div>
+      ))}
+      <button type="button" onClick={()=>setField("nickname",autoNickname(form.length,form.color))}
+        style={{...s.btnOut,display:"flex",alignItems:"center",justifyContent:"center",gap:8,fontSize:12}}>
+        ✨ Auto-name from size + color{form.length||form.color?` → "${autoNickname(form.length,form.color)}"`:""}
+      </button>
+
+      <div style={{...s.mono,fontSize:11,color:C.gold,letterSpacing:"0.08em",textTransform:"uppercase",marginTop:4}}>Pricing</div>
+      {FLEET_PRICING.map(([k,l,ty])=>(
+        <div key={k}><label style={s.label}>{l}</label><input style={s.input} type={ty} value={form[k]||""} onChange={e=>setField(k,e.target.value)}/></div>
+      ))}
+
+      <div style={{...s.mono,fontSize:11,color:C.gold,letterSpacing:"0.08em",textTransform:"uppercase",marginTop:4}}>Registration & Inspection Tracking</div>
+      {FLEET_DATES.map(([k,l])=>(
+        <div key={k}><label style={s.label}>{l}</label><input style={s.input} type="date" value={form[k]||""} onChange={e=>setField(k,e.target.value)}/></div>
+      ))}
+
+      <div style={{...s.mono,fontSize:11,color:C.gold,letterSpacing:"0.08em",textTransform:"uppercase",marginTop:4}}>Equipment Checklist</div>
+      <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+        {FLEET_EQUIP.map(([k,l])=>{
+          const on=!!form.equip?.[k];
+          return <button key={k} type="button" onClick={()=>toggleEquip(k)}
+            style={{padding:"6px 10px",borderRadius:99,border:`1px solid ${on?C.good:C.line}`,background:on?C.good+"22":"transparent",color:on?C.good:C.chromeDim,fontSize:11,cursor:"pointer"}}>
+            {on?"✓ ":""}{l}
+          </button>;
+        })}
+      </div>
+      <div><label style={s.label}>Other equipment / notes (free text — anything else)</label>
+        <textarea style={{...s.input,minHeight:52,resize:"vertical"}} value={form.equipmentNotes||""} onChange={e=>setField("equipmentNotes",e.target.value)} placeholder="Anything not in the list above…"/></div>
+
+      <div><label style={s.label}>Full Details / Info (shown to the public)</label>
+        <textarea style={{...s.input,minHeight:80,resize:"vertical"}} value={form.info||""} onChange={e=>setField("info",e.target.value)} placeholder="Describe this trailer — features, condition, extras, what makes it great…"/></div>
+
+      {!editingId&&(
+        <div>
+          <label style={s.label}>Photos (add up to 10)</label>
+          <input ref={photoRef} type="file" accept="image/*" multiple style={{display:"none"}} onChange={pickPhotos}/>
+          <button type="button" onClick={()=>photoRef.current?.click()} disabled={busyPhoto==="form"} style={{...s.btnOut,display:"flex",alignItems:"center",gap:8,width:"100%",justifyContent:"center"}}>
+            <Icon d={ICONS.img} size={15} color={C.gold}/> {busyPhoto==="form"?"Processing…":`Add Photos${form.photos.length?` (${form.photos.length})`:""}`}
+          </button>
+          {form.photos.length>0&&(
+            <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
+              {form.photos.map((p,i)=>(
+                <div key={i} style={{position:"relative"}}>
+                  <img src={p} alt="" style={{width:64,height:64,borderRadius:5,objectFit:"cover",border:`1px solid ${C.lineBright}`}}/>
+                  <button onClick={()=>removeFormPhoto(i)} style={{position:"absolute",top:-6,right:-6,background:C.danger,border:"none",borderRadius:99,width:18,height:18,color:"#fff",fontSize:11,cursor:"pointer",lineHeight:1}}>×</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+      {editingId&&<div style={{fontSize:10.5,color:C.chromeDim}}>Add or remove photos from the trailer card after saving.</div>}
+      <div style={{display:"flex",gap:8}}>
+        <button style={{...s.btnGold,flex:1}} onClick={saveTrailer}>{editingId?"Save Changes":"Add to Fleet"}</button>
+        <button style={{...s.btnOut,flex:1}} onClick={cancelForm}>Cancel</button>
+      </div>
+    </div>
+  );
 
   return(
     <div style={{display:"flex",flexDirection:"column",gap:12}} className="fadein">
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <div style={{...s.heading,fontSize:20,fontWeight:700}}>{t("fleet",lang)}</div>
-        <button onClick={()=>setAdding(!adding)} style={{...s.btnGold,width:"auto",padding:"9px 14px",display:"flex",alignItems:"center",gap:6}}>
+        <button onClick={()=>adding||editingId?cancelForm():startAdd()} style={{...s.btnGold,width:"auto",padding:"9px 14px",display:"flex",alignItems:"center",gap:6}}>
           <Icon d={ICONS.plus} size={13}/> {t("add",lang)}
         </button>
       </div>
@@ -4181,67 +4317,48 @@ function AdminFleet({db,updateDB,lang}){
             {l} <span style={{opacity:0.7}}>({counts[v]})</span>
           </button>
         ))}
+        <button onClick={()=>setFilter("archive")}
+          style={{padding:"6px 12px",borderRadius:99,border:`1px solid ${filter==="archive"?C.warn:C.line}`,background:filter==="archive"?C.warn+"22":"transparent",color:filter==="archive"?C.warn:C.chromeDim,fontSize:11,...s.mono,cursor:"pointer"}}>
+          🗄 Archive <span style={{opacity:0.7}}>({counts.archive})</span>
+        </button>
       </div>
 
-      {adding&&(
-        <div style={{...s.card,display:"flex",flexDirection:"column",gap:10}}>
-          {[["name","Trailer Name"],["length","Length (e.g. 20 ft)"],["color","Color (e.g. Black, Red)"],["nickname","Nickname (auto-generated below)"],["year","Year"],["vin","VIN"],["power","Power / Generator"],["kitchen","Kitchen Equipment"],["fridge","Cold Storage"],["dailyRate","Daily Rate ($)"],["monthlyRate","Monthly Rate ($)"],["securityDeposit","Security Deposit ($)"],["purchasePrice","Purchase Price ($)"],["replacementValue","Replacement Value ($) — for the lease"]].map(([k,l])=>(
-            <div key={k}><label style={s.label}>{l}</label><input style={s.input} value={form[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))}/></div>
-          ))}
-          <div><label style={s.label}>Equipment included (listed in the lease)</label>
-            <textarea style={{...s.input,minHeight:60,resize:"vertical"}} value={form.equipment} onChange={e=>setForm(f=>({...f,equipment:e.target.value}))} placeholder="e.g. 3 fryers, flat-top grill, 2-door fridge, hood & fire suppression, generator"/></div>
-          <button type="button" onClick={()=>setForm(f=>({...f,nickname:autoNickname(f.length,f.color)}))}
-            style={{...s.btnOut,display:"flex",alignItems:"center",justifyContent:"center",gap:8,fontSize:12}}>
-            ✨ Auto-name from size + color{form.length||form.color?` → "${autoNickname(form.length,form.color)}"`:""}
-          </button>
-          <div><label style={s.label}>Full Details / Info (shown to the public)</label>
-            <textarea style={{...s.input,minHeight:90,resize:"vertical"}} value={form.info} onChange={e=>setForm(f=>({...f,info:e.target.value}))} placeholder="Describe this trailer in detail — features, condition, extras, what makes it great..."/></div>
-          <div>
-            <label style={s.label}>Photos (add up to 10)</label>
-            <input ref={photoRef} type="file" accept="image/*" multiple style={{display:"none"}} onChange={pickPhotos}/>
-            <button type="button" onClick={()=>photoRef.current?.click()} disabled={busyPhoto==="form"} style={{...s.btnOut,display:"flex",alignItems:"center",gap:8,width:"100%",justifyContent:"center"}}>
-              <Icon d={ICONS.img} size={15} color={C.gold}/> {busyPhoto==="form"?"Processing…":`Add Photos${form.photos.length?` (${form.photos.length})`:""}`}
-            </button>
-            {form.photos.length>0&&(
-              <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
-                {form.photos.map((p,i)=>(
-                  <div key={i} style={{position:"relative"}}>
-                    <img src={p} alt="" style={{width:64,height:64,borderRadius:5,objectFit:"cover",border:`1px solid ${C.lineBright}`}}/>
-                    <button onClick={()=>removeFormPhoto(i)} style={{position:"absolute",top:-6,right:-6,background:C.danger,border:"none",borderRadius:99,width:18,height:18,color:"#fff",fontSize:11,cursor:"pointer",lineHeight:1}}>×</button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          <button style={s.btnGold} onClick={addTrailer}>Add to Fleet</button>
-        </div>
-      )}
+      {(adding||editingId)&&renderForm()}
 
       {filtered.length===0&&<div style={{color:C.chromeDim,fontSize:13}}>No trailers in this category.</div>}
       {filtered.map(t=>{
         const tenant=db.tenants.find(x=>x.trailerId===t.id);
         const [,,statusColor]=statusMeta(t.status);
         const inlinePhotoRef=React.createRef();
+        const reg=inspStatus(t.regStickerDate), fs=inspStatus(t.fireSuppressionInspDate), fe=inspStatus(t.fireExtinguisherInspDate);
         return(
-          <div key={t.id} style={{...s.card,padding:0,overflow:"hidden"}}>
-            {/* photo area */}
+          <div key={t.id} style={{...s.card,padding:0,overflow:"hidden",opacity:t.archived?0.72:1}}>
             <div style={{position:"relative",width:"100%",height:t.photo?160:0,overflow:"hidden",background:C.ink2}}>
               {t.photo&&<img src={t.photo} alt={t.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>}
               {t.photo&&<div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,transparent 50%,rgba(0,0,0,0.6))"}}/>}
-              <span style={{position:"absolute",top:10,right:10}}><Pill color={statusColor}>{statusMeta(t.status)[1]}</Pill></span>
+              <span style={{position:"absolute",top:10,right:10}}><Pill color={statusColor}>{t.archived?"Archived":statusMeta(t.status)[1]}</Pill></span>
             </div>
             <div style={{padding:"14px 16px"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
                 <div style={{flex:1}}>
-                  <div style={{fontWeight:600,fontSize:14}}>{t.nickname?<span style={{color:C.gold}}>{t.nickname}</span>:null}{t.nickname?" · ":""}{t.name}</div>
-                  <div style={{fontSize:11,color:C.chromeDim,marginTop:3}}>{t.length} · {fmt$(t.dailyRate)}/day · {fmt$(t.monthlyRate||0)}/mo</div>
-                  {t.purchasePrice>0&&<div style={{fontSize:11,color:C.chromeDim}}>Purchase price: {fmt$(t.purchasePrice)}</div>}
-                  <div style={{fontSize:11,color:C.blue,marginTop:4,...s.mono}}>👁 {t.views||0} public views · {t.photoCount||0} photos</div>
+                  <div style={{fontWeight:600,fontSize:14}}>{t.nickname?<span style={{color:C.gold}}>{t.nickname}</span>:null}{t.nickname?" · ":""}{t.name}{t.year?<span style={{color:C.chromeDim,fontWeight:400}}> · {t.year}</span>:null}</div>
+                  <div style={{fontSize:11,color:C.chromeDim,marginTop:3}}>{t.length} · {fmt$(t.dailyRate)}/day · {fmt$(t.monthlyRate||0)}/mo{t.purchasePrice>0?` · Sale ${fmt$(t.purchasePrice)}`:""}</div>
+                  {t.vin&&<div style={{fontSize:10.5,color:C.chromeDim,...s.mono,marginTop:2}}>VIN {t.vin}{t.plate?` · Plate ${t.plate}`:""}</div>}
+                  <div style={{fontSize:11,color:C.blue,marginTop:4,...s.mono}}>👁 {t.views||0} views · {t.photoCount||0} photos</div>
                   {tenant&&<div style={{fontSize:12,color:C.gold,marginTop:4}}>Rented by: {tenant.name}</div>}
                 </div>
-                {!t.photo&&<Pill color={statusColor}>{statusMeta(t.status)[1]}</Pill>}
+                {!t.photo&&<Pill color={statusColor}>{t.archived?"Archived":statusMeta(t.status)[1]}</Pill>}
               </div>
-              {/* photo thumbnails + remove */}
+
+              {/* tracking badges */}
+              {(t.regStickerDate||t.fireSuppressionInspDate||t.fireExtinguisherInspDate)&&(
+                <div style={{display:"flex",flexDirection:"column",gap:3,marginTop:8,fontSize:10.5,...s.mono}}>
+                  {t.regStickerDate&&<div style={{color:reg.color}}>🪪 Registration: {reg.txt}</div>}
+                  {t.fireSuppressionInspDate&&<div style={{color:fs.color}}>🧯 Fire suppression: {fs.txt}</div>}
+                  {t.fireExtinguisherInspDate&&<div style={{color:fe.color}}>🧯 Fire extinguisher: {fe.txt}</div>}
+                </div>
+              )}
+
               {(t.photos||[]).length>0&&(
                 <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:10}}>
                   {t.photos.map((p,i)=>(
@@ -4252,18 +4369,11 @@ function AdminFleet({db,updateDB,lang}){
                   ))}
                 </div>
               )}
-              {/* add photos button (multi) */}
               <input type="file" accept="image/*" multiple style={{display:"none"}} ref={inlinePhotoRef} onChange={e=>addTrailerPhotos(t.id,e.target.files)}/>
               <button onClick={()=>inlinePhotoRef.current?.click()} disabled={busyPhoto===t.id} style={{...s.btnOut,width:"100%",marginTop:10,display:"flex",alignItems:"center",justifyContent:"center",gap:6,padding:"8px"}}>
                 <Icon d={ICONS.img} size={13} color={C.gold}/> <span style={{fontSize:10}}>{busyPhoto===t.id?"Processing…":"Add Photos"}</span>
               </button>
-              {/* nickname + info quick edit */}
-              <div style={{display:"flex",gap:6,marginTop:8}}>
-                <input defaultValue={t.nickname||""} placeholder="Nickname" onBlur={e=>{const v=e.target.value;updateDB(db=>{const x=db.trailers.find(y=>y.id===t.id);if(x)x.nickname=v;return db;});}}
-                  style={{...s.input,flex:1,padding:"8px 10px",fontSize:12}}/>
-              </div>
-              <textarea defaultValue={t.info||""} placeholder="Full details / info (public)" onBlur={e=>{const v=e.target.value;updateDB(db=>{const x=db.trailers.find(y=>y.id===t.id);if(x)x.info=v;return db;});}}
-                style={{...s.input,width:"100%",marginTop:6,minHeight:60,resize:"vertical",fontSize:12}}/>
+
               {/* status buttons */}
               <div style={{display:"flex",gap:6,marginTop:8,flexWrap:"wrap"}}>
                 {STATUS_OPTIONS.map(([st,label,col])=>(
@@ -4273,17 +4383,26 @@ function AdminFleet({db,updateDB,lang}){
                   </button>
                 ))}
               </div>
-              {/* delete */}
-              <div style={{marginTop:10,paddingTop:10,borderTop:`1px solid ${C.line}`}}>
-                {confirmDelete===t.id ? (
-                  <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                    <span style={{fontSize:11,color:C.danger,flex:1}}>Delete this trailer permanently?</span>
-                    <button onClick={()=>deleteTrailer(t.id)} style={{background:C.danger,color:"#fff",border:"none",borderRadius:3,padding:"6px 12px",fontSize:10,...s.mono,cursor:"pointer"}}>Yes, Delete</button>
-                    <button onClick={()=>setConfirmDelete(null)} style={{background:"none",border:`1px solid ${C.line}`,color:C.chromeDim,borderRadius:3,padding:"6px 12px",fontSize:10,...s.mono,cursor:"pointer"}}>Cancel</button>
+
+              {/* actions: Edit · Archive · Delete */}
+              <div style={{display:"flex",gap:8,marginTop:10,paddingTop:10,borderTop:`1px solid ${C.line}`,flexWrap:"wrap"}}>
+                <button onClick={()=>{startEdit(t);window.scrollTo({top:0,behavior:"smooth"});}} style={{...s.btnOut,flex:1,minWidth:90,padding:"7px",fontSize:11,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+                  <Icon d={ICONS.edit||ICONS.contract} size={13} color={C.gold}/> Edit
+                </button>
+                {t.archived?(
+                  <button onClick={()=>archiveTrailer(t.id,false)} style={{...s.btnOut,flex:1,minWidth:90,padding:"7px",fontSize:11,color:C.good,borderColor:C.good+"55"}}>↩ Restore</button>
+                ):(
+                  <button onClick={()=>archiveTrailer(t.id,true)} style={{...s.btnOut,flex:1,minWidth:90,padding:"7px",fontSize:11,color:C.warn,borderColor:C.warn+"55"}}>🗄 Archive (Sold)</button>
+                )}
+                {confirmDelete===t.id?(
+                  <div style={{display:"flex",gap:6,alignItems:"center",width:"100%"}}>
+                    <span style={{fontSize:11,color:C.danger,flex:1}}>Delete permanently?</span>
+                    <button onClick={()=>deleteTrailer(t.id)} style={{background:C.danger,color:"#fff",border:"none",borderRadius:3,padding:"6px 12px",fontSize:10,...s.mono,cursor:"pointer"}}>Yes</button>
+                    <button onClick={()=>setConfirmDelete(null)} style={{background:"none",border:`1px solid ${C.line}`,color:C.chromeDim,borderRadius:3,padding:"6px 12px",fontSize:10,...s.mono,cursor:"pointer"}}>No</button>
                   </div>
-                ) : (
-                  <button onClick={()=>setConfirmDelete(t.id)} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",color:C.danger,fontSize:11,...s.mono,cursor:"pointer",padding:0}}>
-                    <Icon d={ICONS.trash} size={13}/> Delete Trailer
+                ):(
+                  <button onClick={()=>setConfirmDelete(t.id)} style={{...s.btnOut,flex:1,minWidth:90,padding:"7px",fontSize:11,color:C.danger,borderColor:C.danger+"44",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+                    <Icon d={ICONS.trash} size={13}/> Delete
                   </button>
                 )}
               </div>

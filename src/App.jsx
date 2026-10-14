@@ -461,6 +461,42 @@ const LANGUAGES=[
   {code:"ja",label:"日本語"},
 ];
 const RTL_LANGS=["ar"];
+// ── Public website languages (customer-facing switcher) ──
+const PUBLIC_LANGS=[
+  {code:"en",label:"English"},
+  {code:"ar",label:"العربية"},
+  {code:"es",label:"Español"},
+  {code:"hi",label:"हिन्दी"},
+  {code:"zh",label:"中文"},
+  {code:"ja",label:"日本語"},
+  {code:"fr",label:"Français"},
+  {code:"it",label:"Italiano"},
+];
+Object.assign(TRANSLATIONS,{
+  pHeroSub:{en:"Fully-equipped food trailers for rent, rent-to-own, and sale across Texas. Browse the fleet, then reach out — we'll get you rolling.",ar:"تريلرات طعام مجهّزة بالكامل للإيجار، والإيجار المنتهي بالتمليك، والبيع في جميع أنحاء تكساس. تصفّح الأسطول ثم تواصل معنا — ونخلّيك تنطلق.",es:"Food trailers totalmente equipados para alquiler, alquiler con opción a compra y venta en todo Texas. Explora la flota y contáctanos — te ponemos en marcha.",hi:"टेक्सास भर में किराए, रेंट-टू-ओन और बिक्री के लिए पूरी तरह सुसज्जित फूड ट्रेलर। बेड़ा देखें और संपर्क करें — हम आपको शुरू करा देंगे।",zh:"德州全境提供设备齐全的餐车租赁、以租代购和出售。浏览车队并联系我们——助您立即起步。",ja:"テキサス全域で、設備の整ったフードトレーラーをレンタル・リースオウン・販売。車両をご覧になりお問い合わせください。すぐに始められます。",fr:"Des food trailers entièrement équipés à louer, en location-vente et à vendre partout au Texas. Parcourez la flotte et contactez-nous — on vous lance.",it:"Food trailer completamente attrezzati per noleggio, riscatto e vendita in tutto il Texas. Sfoglia la flotta e contattaci — ti mettiamo in moto."},
+  pApplyRent:{en:"Apply to Rent",ar:"قدّم للإيجار",es:"Solicitar Alquiler",hi:"किराए के लिए आवेदन करें",zh:"申请租赁",ja:"レンタルを申し込む",fr:"Demander une location",it:"Richiedi il noleggio"},
+  pViewFleet:{en:"View the Fleet",ar:"شاهد الأسطول",es:"Ver la Flota",hi:"बेड़ा देखें",zh:"查看车队",ja:"車両を見る",fr:"Voir la flotte",it:"Vedi la flotta"},
+  pContactUs:{en:"Contact Us",ar:"تواصل معنا",es:"Contáctanos",hi:"संपर्क करें",zh:"联系我们",ja:"お問い合わせ",fr:"Contactez-nous",it:"Contattaci"},
+  pOurFleet:{en:"Our Fleet",ar:"أسطولنا",es:"Nuestra Flota",hi:"हमारा बेड़ा",zh:"我们的车队",ja:"車両一覧",fr:"Notre flotte",it:"La nostra flotta"},
+  pFleetSub:{en:"Browse our trailers — photo, specs, price, and current status.",ar:"تصفّح تريلراتنا — صورة، مواصفات، سعر، والحالة الحالية.",es:"Explora nuestros remolques — foto, especificaciones, precio y estado actual.",hi:"हमारे ट्रेलर देखें — फ़ोटो, विशेषताएँ, कीमत और वर्तमान स्थिति।",zh:"浏览我们的餐车——照片、规格、价格和当前状态。",ja:"トレーラーを閲覧 — 写真・仕様・価格・現在の状態。",fr:"Parcourez nos trailers — photo, caractéristiques, prix et statut actuel.",it:"Sfoglia i nostri trailer — foto, specifiche, prezzo e stato attuale."},
+  pViewDetails:{en:"View Details",ar:"عرض التفاصيل",es:"Ver Detalles",hi:"विवरण देखें",zh:"查看详情",ja:"詳細を見る",fr:"Voir les détails",it:"Vedi dettagli"},
+  pApply:{en:"Apply",ar:"قدّم",es:"Solicitar",hi:"आवेदन करें",zh:"申请",ja:"申し込む",fr:"Postuler",it:"Richiedi"},
+  pGetInTouch:{en:"Get in Touch",ar:"تواصل معنا",es:"Ponte en Contacto",hi:"संपर्क में रहें",zh:"联系我们",ja:"お問い合わせ",fr:"Prendre contact",it:"Mettiti in contatto"},
+  pContactSub:{en:"Questions about a trailer or a service? Reach out directly.",ar:"عندك أسئلة عن تريلر أو خدمة؟ تواصل معنا مباشرة.",es:"¿Preguntas sobre un remolque o servicio? Contáctanos directamente.",hi:"किसी ट्रेलर या सेवा के बारे में प्रश्न? सीधे संपर्क करें।",zh:"对餐车或服务有疑问？直接联系我们。",ja:"トレーラーやサービスについてのご質問は直接お問い合わせください。",fr:"Des questions sur un trailer ou un service ? Contactez-nous directement.",it:"Domande su un trailer o un servizio? Contattaci direttamente."},
+  pCall:{en:"Call",ar:"اتصل",es:"Llamar",hi:"कॉल करें",zh:"致电",ja:"電話",fr:"Appeler",it:"Chiama"},
+  pTenantLogin:{en:"Tenant Login",ar:"دخول المستأجر",es:"Acceso Inquilino",hi:"किरायेदार लॉगिन",zh:"租户登录",ja:"テナントログイン",fr:"Espace locataire",it:"Accesso inquilino"},
+  pReviews:{en:"Reviews",ar:"التقييمات",es:"Reseñas",hi:"समीक्षाएँ",zh:"评价",ja:"レビュー",fr:"Avis",it:"Recensioni"},
+  pWriteReview:{en:"Write a Review",ar:"اكتب تقييماً",es:"Escribir Reseña",hi:"समीक्षा लिखें",zh:"写评价",ja:"レビューを書く",fr:"Écrire un avis",it:"Scrivi una recensione"},
+  pStForRent:{en:"For Rent",ar:"للإيجار",es:"En Alquiler",hi:"किराए के लिए",zh:"待租",ja:"レンタル可",fr:"À louer",it:"In affitto"},
+  pStForSale:{en:"For Sale",ar:"للبيع",es:"En Venta",hi:"बिक्री के लिए",zh:"待售",ja:"販売中",fr:"À vendre",it:"In vendita"},
+  pStRentSale:{en:"Rent or Sale",ar:"إيجار أو بيع",es:"Alquiler o Venta",hi:"किराया या बिक्री",zh:"租或售",ja:"レンタル/販売",fr:"Location ou vente",it:"Affitto o vendita"},
+  pStRented:{en:"Not Available",ar:"غير متاح",es:"No Disponible",hi:"उपलब्ध नहीं",zh:"不可用",ja:"利用不可",fr:"Indisponible",it:"Non disponibile"},
+  pStSold:{en:"Sold",ar:"تم البيع",es:"Vendido",hi:"बिक गया",zh:"已售",ja:"売約済み",fr:"Vendu",it:"Venduto"},
+});
+const publicStatusLabel=(status,lang)=>{
+  const k={rent:"pStForRent",sale:"pStForSale","rent-sale":"pStRentSale",rented:"pStRented",sold:"pStSold"}[status]||"pStRentSale";
+  return t(k,lang);
+};
 
 Object.assign(TRANSLATIONS,{
   // ── nav / login ──
@@ -1120,7 +1156,18 @@ function PublicLanding({db,updateDB,onLogin}){
   const [inquiry,setInquiry]=useState(null); // trailer object or {name:"General"}
   const [detail,setDetail]=useState(null);   // trailer being viewed in 3D detail
   const [applyFor,setApplyFor]=useState(null); // null | "" (general) | trailerId
+  const [lang,setLang]=useState(()=>{ try{return localStorage.getItem("txlang")||"en";}catch(_){return "en";} });
+  const setL=(v)=>{ setLang(v); try{localStorage.setItem("txlang",v);}catch(_){ } };
+  const isRTL=RTL_LANGS.includes(lang);
   const trailers=(db.trailers||[]).filter(t=>!t.archived);
+  const LangSwitcher=()=>(
+    <div style={{position:"absolute",top:14,left:14,zIndex:20}}>
+      <select value={lang} onChange={e=>setL(e.target.value)} aria-label="Language"
+        style={{background:"rgba(17,17,20,0.7)",backdropFilter:"blur(6px)",border:`1px solid ${C.lineBright}`,color:C.paper,padding:"7px 10px",borderRadius:6,fontSize:11,fontFamily:"'JetBrains Mono',monospace",cursor:"pointer"}}>
+        {PUBLIC_LANGS.map(l=><option key={l.code} value={l.code} style={{color:"#000"}}>{l.label}</option>)}
+      </select>
+    </div>
+  );
 
   const logInquiry=(trailer,channel)=>{
     updateDB(d=>addNotification(d,{forRole:"admin",title:"New Public Inquiry",body:`Website visitor is asking about ${trailer.name} (via ${channel}).`}));
@@ -1151,37 +1198,39 @@ function PublicLanding({db,updateDB,onLogin}){
   );
 
   return(
-    <div style={{...s.app,direction:"ltr"}}>
+    <div style={{...s.app,direction:isRTL?"rtl":"ltr"}}>
+      <LangSwitcher/>
       {/* Tenant Login — small, top corner */}
       <button onClick={onLogin}
         style={{position:"absolute",top:14,right:14,zIndex:20,background:"rgba(17,17,20,0.7)",backdropFilter:"blur(6px)",border:`1px solid ${C.lineBright}`,color:C.paper,padding:"7px 12px",borderRadius:6,fontSize:10.5,fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer",display:"flex",alignItems:"center",gap:6}}>
-        <Icon d={ICONS.user} size={12} color={C.gold}/> Tenant Login
+        <Icon d={ICONS.user} size={12} color={C.gold}/> {t("pTenantLogin",lang)}
       </button>
 
       {/* Hero */}
       <div style={{padding:"64px 24px 40px",textAlign:"center",background:`radial-gradient(ellipse at top,rgba(200,155,60,0.10),transparent 70%)`}}>
         <img src={LOGO_URI} alt="Texan Food Trailer Solution" style={{width:280,maxWidth:"86%",height:"auto",margin:"0 auto 18px",display:"block",borderRadius:12,filter:"drop-shadow(0 4px 20px rgba(200,155,60,0.3))"}}/>
         <h1 style={{fontFamily:"'Oswald',sans-serif",fontSize:27,fontWeight:700,letterSpacing:"0.02em",color:C.paper,lineHeight:1.15,margin:"0 0 10px"}}>Texan Food Trailers<br/>Solution</h1>
-        <div style={{fontSize:13,color:C.paperDim,lineHeight:1.6,maxWidth:340,margin:"0 auto"}}>
-          Fully-equipped food trailers for rent, rent-to-own, and sale across Texas. View any trailer in interactive 3D, customize the color and equipment, then reach out — we'll get you rolling.
+        <div style={{fontSize:13,color:C.paperDim,lineHeight:1.6,maxWidth:360,margin:"0 auto"}}>
+          {t("pHeroSub",lang)}
         </div>
         <div style={{display:"flex",gap:10,justifyContent:"center",marginTop:22,flexWrap:"wrap"}}>
-          <button onClick={()=>setApplyFor("")} style={{...s.btnGold,width:"auto",padding:"12px 22px"}}>Apply to Rent</button>
-          <a href="#fleet" style={{...s.btnGold,width:"auto",padding:"12px 22px",textDecoration:"none",display:"inline-block",background:"none",border:`1px solid ${C.lineBright}`,color:C.paper}}>View the Fleet</a>
+          <button onClick={()=>setApplyFor("")} style={{...s.btnGold,width:"auto",padding:"12px 22px"}}>{t("pApplyRent",lang)}</button>
+          <a href="#fleet" style={{...s.btnGold,width:"auto",padding:"12px 22px",textDecoration:"none",display:"inline-block",background:"none",border:`1px solid ${C.lineBright}`,color:C.paper}}>{t("pViewFleet",lang)}</a>
           <button onClick={()=>setInquiry({name:"your services",_general:true})}
             style={{background:"none",border:`1px solid ${C.lineBright}`,color:C.paper,borderRadius:4,padding:"12px 22px",fontFamily:"'JetBrains Mono',monospace",fontSize:12,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>
-            Contact Us
+            {t("pContactUs",lang)}
           </button>
         </div>
       </div>
 
       {/* Fleet gallery */}
       <div id="fleet" style={sec}>
-        <div style={h2}>Our Fleet</div>
-        <div style={h2sub}>{trailers.length} trailer{trailers.length!==1?"s":""} — photo, specs, price, and current status.</div>
+        <div style={h2}>{t("pOurFleet",lang)}</div>
+        <div style={h2sub}>{t("pFleetSub",lang)}</div>
         <div style={{display:"flex",flexDirection:"column",gap:16}}>
           {trailers.map(tr=>{
-            const st=PUBLIC_STATUS[tr.status]||PUBLIC_STATUS["rent-sale"];
+            const st0=PUBLIC_STATUS[tr.status]||PUBLIC_STATUS["rent-sale"];
+            const st={col:st0.col,label:publicStatusLabel(tr.status,lang)};
             const open=isOpen(tr.status);
             const rentable=isRentable(tr.status);
             const cover=(tr.photos&&tr.photos[0])||tr.photo;
@@ -1214,9 +1263,9 @@ function PublicLanding({db,updateDB,onLogin}){
                   )}
                   <div style={{display:"flex",gap:8,marginTop:2}}>
                     <button onClick={()=>setDetail(tr)} style={{...s.btnGold,flex:1,background:"none",border:`1px solid ${C.lineBright}`,color:C.paper,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
-                      <Icon d={ICONS.eye} size={14} color={C.gold}/> View Details
+                      <Icon d={ICONS.eye} size={14} color={C.gold}/> {t("pViewDetails",lang)}
                     </button>
-                    {open && <button onClick={()=>setApplyFor(tr.id)} style={{...s.btnGold,flex:1}}>Apply</button>}
+                    {open && <button onClick={()=>setApplyFor(tr.id)} style={{...s.btnGold,flex:1}}>{t("pApply",lang)}</button>}
                   </div>
                 </div>
               </div>
@@ -1247,11 +1296,11 @@ function PublicLanding({db,updateDB,onLogin}){
 
       {/* Contact */}
       <div style={sec}>
-        <div style={h2}>Get in Touch</div>
-        <div style={h2sub}>Questions about a trailer or a service? Reach out directly.</div>
+        <div style={h2}>{t("pGetInTouch",lang)}</div>
+        <div style={h2sub}>{t("pContactSub",lang)}</div>
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
           <a href={`tel:${OWNER_PHONE}`} style={{...contactBtnStyle}}>
-            <Icon d={ICONS.contact} size={16} color={C.gold}/> <span>Call {OWNER_PHONE}</span>
+            <Icon d={ICONS.contact} size={16} color={C.gold}/> <span>{t("pCall",lang)} {OWNER_PHONE}</span>
           </a>
           <a href={`mailto:${OWNER_EMAIL}`} style={{...contactBtnStyle}}>
             <Icon d={ICONS.book} size={16} color={C.gold}/> <span>{OWNER_EMAIL}</span>

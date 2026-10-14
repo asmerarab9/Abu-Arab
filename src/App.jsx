@@ -3523,6 +3523,178 @@ function leaseSections(t,termType){
   return S;
 }
 
+/* ── Richly-styled lease document (matches the Texan PDF template) ──
+   One builder used by BOTH the in-app view and the downloaded PDF, so they're identical. */
+function buildLeaseHTML(t, termType, opts){
+  opts=opts||{};
+  const signed=opts.signed, templateMode=opts.templateMode;
+  const isWeekly=termType==="weekly", isRTO=termType==="rent-to-own"||termType==="rto", isAnnual=termType==="annual";
+  const esc=v=>String(v==null?"":v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const money=n=>n?fmt$(Number(n)):"";
+  const repl=Number(t.replacementValue||t.purchaseOptionPrice)||0;
+  const weekly=Number(t.weeklyRate)||Math.round((Number(t.monthlyRate)||0)*12/52)||0;
+  const rate=Number(t.monthlyRate)||0, dep=Number(t.securityDeposit)||0;
+  const footLabel=isRTO?"Lease Agreement with Option to Purchase":isWeekly?"Weekly Rental Agreement":isAnnual?"Annual Rental Agreement":"Monthly Rental Agreement";
+  const title=isRTO?"FOOD TRAILER LEASE AGREEMENT WITH OPTION TO PURCHASE":`FOOD TRAILER ${isWeekly?"":isAnnual?"ANNUAL ":"MONTHLY "}RENTAL AGREEMENT`;
+  // field underline that shows a value (or blank line)
+  const U=(v,w)=>`<span class="lxu" style="min-width:${w||120}px">${esc(v)}</span>`;
+  const secH=n=>`<div class="lxsh">${n}</div>`;
+  const legal=txt=>`<div class="lxleg">Legal basis: ${txt}</div>`;
+  const ini=`<div class="lxini">Lessee Initials: ________</div>`;
+
+  // Shared header boxes
+  const partiesBox=(lesseeExtra)=>`
+    <table class="lxbox"><tr>
+      <td style="width:50%">
+        <div class="lxbh">LESSOR / OWNER</div>
+        <div class="lxc">Legal Name / Business: <b>Texan Food Trailers Solution</b></div>
+        <div class="lxc">Authorized Representative: ${U(t.lessorRep,180)}</div>
+        <div class="lxc">Mailing Address: ${U(LESSOR_ADDR,180)}</div>
+        <div class="lxc">Phone: ${U(OWNER_PHONE,180)}</div>
+        <div class="lxc">Email: ${U(OWNER_EMAIL,180)}</div>
+      </td>
+      <td style="width:50%">
+        <div class="lxbh">LESSEE / RENTER</div>
+        <div class="lxc">Full Legal Name: ${U(t.name,170)}</div>
+        <div class="lxc">Driver License / ID #: ${U(t.dl,150)}</div>
+        <div class="lxc">Mailing Address: ${U(t.address,170)}</div>
+        <div class="lxc">Phone: ${U(t.phone,170)}</div>
+        ${lesseeExtra||""}
+      </td>
+    </tr></table>`;
+  const trailerBox=`
+    <table class="lxbox"><tr><td>
+      <div class="lxc">Year: ${U(t._trailerYear,70)} &nbsp; Make: ${U(t._trailerMake,90)} &nbsp; VIN: ${U(t._trailerVin,150)} &nbsp; Plate: ${U(t.plate,80)}${t._trailerLength?` &nbsp; Size: ${U(t._trailerLength,70)}`:""}</div>
+    </td></tr></table>
+    <div class="lxbeige">Trailer Replacement Value (full price): $ ${U(repl?String(Number(repl).toLocaleString()):"",150)}</div>
+    <div class="lxc" style="margin-top:6px">Equipment included:</div>
+    <div class="lxline">${esc(t.equipment)}</div>${t.equipment?"":'<div class="lxline"></div>'}`;
+
+  let html=`<style>
+    #petition-print{font-family:'Helvetica Neue',Arial,Helvetica,sans-serif;color:#222;font-size:10.3pt;line-height:1.5;}
+    #petition-print .lxhead{text-align:center;margin-bottom:4px;}
+    #petition-print .lxlogo{width:230px;max-width:62%;height:auto;margin:0 auto 2px;display:block;}
+    #petition-print .lxtitle{font-weight:800;font-size:16pt;color:#15223f;letter-spacing:.3px;margin-top:2px;}
+    #petition-print .lxsub{color:#9e2a2b;font-weight:700;font-size:9.5pt;letter-spacing:.6px;margin-top:1px;}
+    #petition-print .lxrule{border-top:2.5px solid #15223f;margin:8px 0 12px;}
+    #petition-print .lxsh{color:#15223f;font-weight:800;font-size:10.3pt;text-transform:uppercase;letter-spacing:.3px;border-bottom:1.3px solid #c9a24a;padding-bottom:3px;margin:13px 0 6px;}
+    #petition-print .lxc{margin:3px 0;}
+    #petition-print .lxp{margin:4px 0;text-align:justify;}
+    #petition-print .lxsub2{margin:4px 0 4px 16px;text-align:justify;}
+    #petition-print .lxu{display:inline-block;border-bottom:1px solid #333;line-height:1.1;padding:0 3px;}
+    #petition-print .lxbox{width:100%;border-collapse:collapse;margin:4px 0;}
+    #petition-print .lxbox td{border:1px solid #b9bcc4;vertical-align:top;padding:8px 10px;}
+    #petition-print .lxbh{background:#e9edf2;color:#15223f;font-weight:700;font-size:9pt;letter-spacing:.4px;margin:-8px -10px 8px;padding:5px 10px;border-bottom:1px solid #b9bcc4;}
+    #petition-print .lxbeige{background:#f4edda;border:1px solid #e3d7b0;padding:6px 10px;font-weight:600;margin:4px 0;}
+    #petition-print .lxline{border-bottom:1px solid #333;min-height:15px;margin:8px 0;}
+    #petition-print .lxpay{width:100%;border-collapse:collapse;margin:4px 0;}
+    #petition-print .lxpay th{background:#15223f;color:#fff;text-align:left;padding:7px 10px;font-size:9.5pt;}
+    #petition-print .lxpay th.r,#petition-print .lxpay td.r{text-align:right;white-space:nowrap;}
+    #petition-print .lxpay td{border-bottom:1px solid #d7dae0;padding:7px 10px;}
+    #petition-print .lxpay tr.tot td{background:#f4edda;font-weight:700;border-bottom:none;}
+    #petition-print .lxleg{font-size:8.3pt;font-style:italic;color:#777;margin-top:4px;}
+    #petition-print .lxini{text-align:right;font-size:9pt;margin-top:4px;}
+    #petition-print .lxsig{display:flex;gap:36px;margin-top:10px;}
+    #petition-print .lxsigc{flex:1;line-height:2.0;}
+    #petition-print .lxsigh{color:#9e2a2b;font-weight:800;margin-bottom:8px;}
+    #petition-print .lxfoot{text-align:center;color:#9aa0ab;font-size:8.3pt;margin-top:20px;border-top:1px solid #e3e5ea;padding-top:6px;}
+    #petition-print b{color:#15223f;}
+  </style>
+  <div class="lxhead">
+    <img class="lxlogo" src="${LOGO_URI}"/>
+    <div class="lxtitle">${title}</div>
+    <div class="lxsub">TEXAN FOOD TRAILERS SOLUTION</div>
+  </div>
+  <div class="lxrule"></div>`;
+
+  if(isWeekly){
+    html+=secH("1. PARTIES")+partiesBox();
+    html+=secH("2. TRAILER DESCRIPTION")+trailerBox;
+    html+=secH("3. RENTAL PERIOD & LOCATION")
+      +`<div class="lxc"><b>Pick-up:</b> Date ${U(t.startDate,120)} Time ${U(t.pickupTime,80)} &nbsp;&nbsp; <b>Return:</b> Date ${U(t.endDate,120)} Time ${U(t.returnTime,80)}</div>`
+      +`<div class="lxc"><b>Pick-up &amp; Return Location:</b> ${U(t.operatingLocation,330)}</div>`;
+    html+=secH("4. EVENT DETAILS")
+      +`<div class="lxc"><b>Event name:</b> ${U(t.eventName,300)}</div>`
+      +`<div class="lxc"><b>Event address:</b> ${U(t.eventAddress,300)}</div>`
+      +`<div class="lxc"><b>Event coordinator phone number or email address:</b> ${U(t.eventCoordinator,230)}</div>`;
+    html+=secH("5. PAYMENT")
+      +`<table class="lxpay"><tr><th>Item</th><th class="r">Amount</th></tr>`
+      +`<tr><td>Weekly Rent &nbsp;(due in full before pick-up)</td><td class="r">$ ${U(weekly?String(weekly.toLocaleString()):"",90)}</td></tr>`
+      +`<tr><td>Security Deposit &nbsp;(refundable — see Section 7)</td><td class="r">$ ${U(dep?String(dep.toLocaleString()):"",90)}</td></tr>`
+      +`<tr><td>Other Fees: ${U(t.otherFees,180)}</td><td class="r">$ ${U("",90)}</td></tr>`
+      +`<tr class="tot"><td>TOTAL DUE BEFORE PICK-UP</td><td class="r">$ ${U((weekly||dep)?String(((weekly||0)+(dep||0)).toLocaleString()):"",90)}</td></tr></table>`;
+    html+=secH("6. LATE RETURN")
+      +`<div class="lxp">The trailer must be returned on the date and time stated in Section 3. Time is of the essence.</div>`
+      +`<div class="lxsub2"><b>(a)</b> If the trailer is returned late by up to 24 hours, a <b>$200.00 late-return fee</b> will be deducted from the Security Deposit.</div>`
+      +`<div class="lxsub2"><b>(b)</b> After the first 24 hours, an additional <b>$250.00 will be charged for each day (or part of a day)</b> the trailer is not returned.</div>`
+      +`<div class="lxsub2"><b>(c)</b> Any late-return charges that exceed the Security Deposit must be paid by Lessee within seven (7) days of written notice.</div>`
+      +`<div class="lxsub2"><b>(d)</b> If the trailer is not returned after written demand, the Lessor may recover it and report it to law enforcement as unreturned rental property.</div>`
+      +legal("Tex. Bus. &amp; Com. Code §2A.504(a) (late fees agreed in the lease as liquidated damages); Tex. Penal Code §31.01(6)(D) and §31.04(b)(4) (failure to return property held under a rental agreement after written demand).");
+    html+=secH("7. SECURITY DEPOSIT")
+      +`<div class="lxp">The Security Deposit will be refunded after the trailer is returned and inspected, less any deductions for late-return fees, cleaning, missing equipment, damage, or repairs. If these costs exceed the deposit, Lessee agrees to pay the remaining balance within seven (7) days of written notice.</div>`
+      +legal("Tex. Bus. &amp; Com. Code §1.302 (terms agreed by the parties are enforceable) and §2A.504 (agreed damages).");
+    html+=secH("8. PICK-UP, TRANSPORT &amp; RETURN CONDITION")
+      +`<div class="lxsub2"><b>(a)</b> Lessee is fully responsible for towing the trailer at Lessee's own risk and expense, from pick-up through return, and for returning it to the <b>same location it was picked up from</b>.</div>`
+      +`<div class="lxsub2"><b>(b)</b> Photos and/or video of the trailer and all equipment will be taken at pick-up and at return and will serve as the official record of condition.</div>`
+      +`<div class="lxsub2"><b>(c)</b> Lessee must return the trailer <b>clean inside and out, with all equipment present and working properly, and with no scratches, dents, or damage of any kind</b>. Lessee is responsible for the full cost of any cleaning, repair, or replacement needed to restore the trailer to its pick-up condition.</div>`
+      +legal("Tex. Bus. &amp; Com. Code §1.302 (agreed terms) and §2A.523 (Lessor's remedies when Lessee breaches the lease).")+ini;
+    html+=secH("9. PROHIBITED USES")
+      +`<div class="lxsub2"><b>(a) No Subleasing.</b> Lessee may not sublease, sublet, lend, or transfer the trailer, or allow any other person or business to operate from it, without the Lessor's prior written consent.</div>`
+      +`<div class="lxsub2"><b>(b) No Painting, Spraying, or Stickers.</b> Lessee may not spray, paint, wrap, or apply stickers, decals, or any adhesive material to any surface of the trailer, inside or outside.</div>`
+      +`<div class="lxsub2"><b>(c) No Modifications.</b> Lessee may not drill, cut, remove, add, or alter any part, fixture, or equipment of the trailer.</div>`
+      +`<div class="lxp">Any violation of this Section allows the Lessor to end this Agreement immediately and recover the trailer, and the full cost of restoring the trailer will be charged to Lessee.</div>`
+      +legal("Tex. Bus. &amp; Com. Code §2A.303(b) and (d) (a lease may prohibit subleasing and make it a default); §2A.523 and §2A.525(c) (Lessor may take back the trailer after default without court action if done without breach of the peace).")+ini;
+    html+=secH("10. GPS TRACKING, FIRE &amp; ACCIDENT")
+      +`<div class="lxsub2"><b>(a) GPS Tracking.</b> Lessee is aware and agrees that the trailer is tracked at all times by a third-party GPS tracking company during the rental period.</div>`
+      +`<div class="lxsub2"><b>(b) Full Responsibility.</b> GPS tracking does not reduce Lessee's responsibility in any way. If the trailer is burned or damaged by fire, or is involved in an accident, while in Lessee's possession, <b>Lessee is responsible for the full price of the trailer</b> as stated in the Trailer Replacement Value in Section 2.</div>`
+      +legal("Tex. Penal Code §16.06(d)(1) (tracking is lawful with the consent of the lessee, given by signing this Agreement); Tex. Bus. &amp; Com. Code §2A.219 and §1.302 (risk of loss may be placed on the Lessee by agreement).")+ini;
+    html+=secH("11. GOVERNING LAW")
+      +`<div class="lxp">This Agreement is a lease of goods governed by the laws of the State of Texas, including Chapter 2A of the Texas Business and Commerce Code (Leases). The legal references listed under each Section are included for information so both parties understand the legal basis of these terms. If any provision is found unenforceable, the remaining provisions stay in full effect.</div>`;
+    html+=secH("12. ACCEPTANCE")
+      +`<div class="lxp">By signing below, both parties confirm they have read, understood, and agree to all terms of this Agreement.</div>`;
+  } else {
+    // Long-form (monthly / annual / rent-to-own): same visual system, content from leaseSections (clauses 5+)
+    const months=t.termMonths||(isAnnual?12:"");
+    html+=secH("1. PARTIES TO THE AGREEMENT")
+      +partiesBox(`<div class="lxc">Business (if any): ${U(t.businessName,150)}</div><div class="lxc">Co-Renter (if any): ${U(t.secondLessee,150)}</div>`);
+    html+=secH("2. TRAILER DESCRIPTION & EQUIPMENT")+trailerBox;
+    html+=secH("3. LEASE TERM")
+      +`<div class="lxc"><b>Term Length:</b> ${U(months?String(months):"",70)} months &nbsp; <b>Start:</b> ${U(t.startDate,120)} &nbsp; <b>End:</b> ${U(t.endDate,120)}</div>`;
+    html+=secH("4. RENT, DEPOSIT & PAYMENT")
+      +`<table class="lxpay"><tr><th>Item</th><th class="r">Amount</th></tr>`
+      +`<tr><td>Monthly Rent</td><td class="r">$ ${U(rate?String(rate.toLocaleString()):"",90)}</td></tr>`
+      +`<tr><td>Security Deposit (refundable)</td><td class="r">$ ${U(dep?String(dep.toLocaleString()):"",90)}</td></tr>`
+      +`<tr><td>First Month Rent (due at signing)</td><td class="r">$ ${U(rate?String(rate.toLocaleString()):"",90)}</td></tr>`
+      +`<tr class="tot"><td>TOTAL DUE BEFORE POSSESSION</td><td class="r">$ ${U((rate||dep)?String(((rate||0)+(dep||0)).toLocaleString()):"",90)}</td></tr></table>`;
+    const secs=leaseSections(t,termType).filter(sc=>sc.n>=5);
+    secs.forEach(sc=>{
+      html+=secH(`${sc.n}. ${esc(sc.title).toUpperCase()}`);
+      sc.paras.forEach(p=>{ html+=`<div class="lxp">${/^Legal basis:/.test(p)?`<span class="lxleg">${esc(p)}</span>`:esc(p)}</div>`; });
+      if(sc.initials) html+=ini;
+    });
+  }
+
+  // Signature area
+  if(signed){
+    html+=`<div class="lxsh">SIGNATURE PAGE</div>
+      <div class="lxc">Signed electronically by <b>${esc(signed.signedBy)}</b>.</div>
+      <div style="font-family:'Brush Script MT',cursive;font-size:24pt;border-bottom:1px solid #000;display:inline-block;padding:0 20px 2px;margin:6px 0 8px">${esc(signed.signedBy)}</div>
+      <div class="lxleg" style="border-top:1px solid #ccc;padding-top:8px"><b>Electronic Signature Audit (ESIGN / Texas UETA):</b><br/>Signer: ${esc(signed.signedBy)} &nbsp; Signed at: ${esc(signed.signedAt)}<br/>Consent to electronic records: Yes · Agreed to all sections: Yes<br/>Document hash: ${esc(signed.docHash)}</div>
+      <div class="lxc" style="margin-top:10px">LESSOR: Texan Food Trailers Solution — authorized signature on file.</div>`;
+  } else {
+    html+=`<div class="lxsh">SIGNATURES</div>
+      <div class="lxsig">
+        <div class="lxsigc"><div class="lxsigh">LESSOR — Texan Food Trailers Solution</div>
+          <div>Signature: ________________________________</div><div>Print Name: ______________________________</div><div>Date: __________________</div></div>
+        <div class="lxsigc"><div class="lxsigh">LESSEE</div>
+          <div>Signature: ________________________________</div><div>Print Name: ______________________________</div><div>Date: __________________</div></div>
+      </div>`;
+    if(templateMode) html+=`<div class="lxleg" style="margin-top:12px">Blank template — print and fill by hand, or use as the basis for an auto-filled lease when a tenant is approved.</div>`;
+  }
+  html+=`<div class="lxfoot">Texan Food Trailers Solution &nbsp;•&nbsp; ${footLabel}</div>`;
+  return html;
+}
+
 function LeaseContract({tenant,trailer,termType,onClose,onPrint,signed,onSign,templateMode}){
   const t={...tenant,
     _trailerName:trailer?.name,_trailerVin:trailer?.vin,_trailerYear:trailer?.year,_trailerLength:trailer?.length,
@@ -3546,80 +3718,30 @@ function LeaseContract({tenant,trailer,termType,onClose,onPrint,signed,onSign,te
         <button onClick={onClose} style={{...s.btnOut,flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}><Icon d={ICONS.back} size={14}/> Back</button>
         <button onClick={onPrint} style={{...s.btnGold,flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}><Icon d={ICONS.download} size={14} color={C.ink}/> Print / PDF</button>
       </div>
-      <div id="petition-print" style={{background:"#fff",color:"#000",padding:"38px 32px",fontFamily:"'Times New Roman',Georgia,serif",fontSize:12.5,lineHeight:1.55}}>
-        <div style={{textAlign:"center",marginBottom:6}}>
-          <img src={LOGO_URI} alt="Texan Food Trailers Solution" style={{width:210,maxWidth:"60%",height:"auto",margin:"0 auto"}}/>
-        </div>
-        <div style={{textAlign:"center",fontWeight:"bold",fontSize:15,marginTop:2}}>{(termType==="rent-to-own"||termType==="rto")?"FOOD TRAILER LEASE AGREEMENT WITH OPTION TO PURCHASE":`FOOD TRAILER ${termType==="weekly"?"WEEKLY":termType==="annual"?"ANNUAL":"MONTHLY"} RENTAL AGREEMENT`}</div>
-        <div style={{textAlign:"center",fontSize:11,marginTop:3}}>Texan Food Trailers Solution · {LESSOR_ADDR} · {OWNER_PHONE} · {OWNER_EMAIL}</div>
-        <hr style={{border:"none",borderTop:"1px solid #000",margin:"12px 0"}}/>
-        {secs.map(sec=>(
-          <div key={sec.n} style={{marginBottom:12}}>
-            <div style={{fontWeight:"bold",marginBottom:3}}>{sec.n}. {sec.title}</div>
-            {sec.paras.map((p,i)=><div key={i} style={{marginBottom:4}}>{p}</div>)}
-            {sec.initials&&<div style={{fontSize:11,color:"#555",marginTop:3}}>Lessee initials: __________  Date: __________</div>}
-          </div>
-        ))}
+      <div id="petition-print" style={{background:"#fff",color:"#222",padding:"34px 30px"}}
+        dangerouslySetInnerHTML={{__html:buildLeaseHTML(t,termType,{signed,templateMode})}}/>
 
-        {/* Signature block */}
-        <hr style={{border:"none",borderTop:"1px solid #000",margin:"14px 0"}}/>
-        <div style={{fontWeight:"bold",marginBottom:6}}>Signature Page</div>
-        {templateMode?(
-          <div style={{fontSize:12.5,lineHeight:2.2}}>
-            <div style={{display:"flex",gap:40,flexWrap:"wrap"}}>
-              <div style={{flex:1,minWidth:220}}>
-                <div style={{fontWeight:"bold",marginBottom:10}}>LESSOR — {LESSOR_NAME}</div>
-                <div>Signature: ________________________________</div>
-                <div>Print Name: ______________________________</div>
-                <div>Date: __________________</div>
-              </div>
-              <div style={{flex:1,minWidth:220}}>
-                <div style={{fontWeight:"bold",marginBottom:10}}>LESSEE</div>
-                <div>Signature: ________________________________</div>
-                <div>Print Name: ______________________________</div>
-                <div>Date: __________________</div>
-              </div>
-            </div>
-            <div style={{marginTop:16,fontSize:10,color:"#777",fontStyle:"italic"}}>Blank template — print and fill by hand, or use as the basis for an auto-filled lease when a tenant is approved.</div>
-          </div>
-        ):signed?(
-          <div>
-            <div style={{marginBottom:6}}>Signed electronically by <strong>{signed.signedBy}</strong>.</div>
-            <div style={{fontFamily:"'Brush Script MT',cursive",fontSize:26,borderBottom:"1px solid #000",display:"inline-block",padding:"0 20px 2px",marginBottom:8}}>{signed.signedBy}</div>
-            <div style={{fontSize:10.5,color:"#333",marginTop:6,lineHeight:1.5,borderTop:"1px solid #ccc",paddingTop:8}}>
-              <strong>Electronic Signature Audit (ESIGN Act / Texas UETA):</strong><br/>
-              Signer: {signed.signedBy}<br/>
-              Signed at: {signed.signedAt}<br/>
-              Consent to electronic records: Yes · Agreed to all sections: Yes<br/>
-              Document hash: {signed.docHash}<br/>
-              Device: {(signed.userAgent||"").slice(0,120)}
-            </div>
-            <div style={{marginTop:14}}>LESSOR: {LESSOR_NAME} — authorized signature on file.</div>
-          </div>
-        ):(
-          <div className="no-print">
-            <div style={{fontSize:11.5,marginBottom:10,color:"#333"}}>Document reference hash: <strong>{docHash}</strong></div>
-            <label style={{display:"flex",gap:8,alignItems:"flex-start",marginBottom:8,fontSize:12.5}}>
-              <input type="checkbox" checked={consent1} onChange={e=>setConsent1(e.target.checked)} style={{marginTop:3}}/>
-              <span>I agree to sign this agreement electronically and to conduct this transaction by electronic records, as permitted by the ESIGN Act and the Texas Uniform Electronic Transactions Act.</span>
-            </label>
-            <label style={{display:"flex",gap:8,alignItems:"flex-start",marginBottom:12,fontSize:12.5}}>
-              <input type="checkbox" checked={consent2} onChange={e=>setConsent2(e.target.checked)} style={{marginTop:3}}/>
-              <span>I have read, understood, and agree to all sections of this Agreement.</span>
-            </label>
-            <div style={{marginBottom:4,fontSize:12}}>Type your full legal name to sign:</div>
-            <input value={sigName} onChange={e=>setSigName(e.target.value)} placeholder="Full legal name"
-              style={{width:"100%",padding:"10px 12px",border:"1px solid #000",borderRadius:4,fontSize:16,fontFamily:"'Brush Script MT',cursive",marginBottom:12}}/>
-            <button onClick={doSign} disabled={!canSign}
-              style={{width:"100%",padding:"13px",borderRadius:5,border:"none",cursor:canSign?"pointer":"not-allowed",background:canSign?"#4a7c59":"#999",color:"#fff",fontWeight:700,fontSize:14}}>
-              Sign Agreement Electronically
-            </button>
-          </div>
-        )}
-        <div style={{marginTop:18,fontSize:9.5,color:"#777",fontStyle:"italic",borderTop:"1px solid #ddd",paddingTop:6}}>
-          Prepared by {LESSOR_NAME}. Based on the business's lease template; have an attorney review before use.
+      {/* e-sign panel (screen only; not part of the printed document) */}
+      {!templateMode&&!signed&&(
+        <div className="no-print" style={{background:"#fff",color:"#000",padding:"0 30px 34px",fontFamily:"Arial,sans-serif"}}>
+          <div style={{fontSize:11.5,marginBottom:10,color:"#333"}}>Document reference hash: <strong>{docHash}</strong></div>
+          <label style={{display:"flex",gap:8,alignItems:"flex-start",marginBottom:8,fontSize:12.5}}>
+            <input type="checkbox" checked={consent1} onChange={e=>setConsent1(e.target.checked)} style={{marginTop:3}}/>
+            <span>I agree to sign this agreement electronically and to conduct this transaction by electronic records, as permitted by the ESIGN Act and the Texas Uniform Electronic Transactions Act.</span>
+          </label>
+          <label style={{display:"flex",gap:8,alignItems:"flex-start",marginBottom:12,fontSize:12.5}}>
+            <input type="checkbox" checked={consent2} onChange={e=>setConsent2(e.target.checked)} style={{marginTop:3}}/>
+            <span>I have read, understood, and agree to all sections of this Agreement.</span>
+          </label>
+          <div style={{marginBottom:4,fontSize:12}}>Type your full legal name to sign:</div>
+          <input value={sigName} onChange={e=>setSigName(e.target.value)} placeholder="Full legal name"
+            style={{width:"100%",padding:"10px 12px",border:"1px solid #000",borderRadius:4,fontSize:16,fontFamily:"'Brush Script MT',cursive",marginBottom:12,boxSizing:"border-box"}}/>
+          <button onClick={doSign} disabled={!canSign}
+            style={{width:"100%",padding:"13px",borderRadius:5,border:"none",cursor:canSign?"pointer":"not-allowed",background:canSign?"#4a7c59":"#999",color:"#fff",fontWeight:700,fontSize:14}}>
+            Sign Agreement Electronically
+          </button>
         </div>
-      </div>
+      )}
     </div>
   );
 }

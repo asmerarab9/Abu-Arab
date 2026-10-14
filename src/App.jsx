@@ -2751,6 +2751,7 @@ function AdminTenants({db,updateDB,lang}){
               operatingLocation:sel.operatingLocation||"",holdoverFee:String(sel.holdoverFee||""),repairThreshold:String(sel.repairThreshold||""),
               lateFee5:sel.lateFee5||"15%",lateFee10:sel.lateFee10||"20%",dueDay:sel.dueDay||"1st",
               equipment:sel.equipment||"",businessName:sel.businessName||"",secondLessee:sel.secondLessee||"",
+              eventName:sel.eventName||"",eventAddress:sel.eventAddress||"",eventCoordinator:sel.eventCoordinator||"",
             });
             setEditingId(sel.id);
             setView("edit");
@@ -2829,6 +2830,15 @@ function AdminTenants({db,updateDB,lang}){
           {[["purchaseOptionPrice","Total Purchase Price ($)"],["baseRent","Base Rent per Month ($)"],["purchaseCreditPerMonth","Purchase Credit per Month ($)"],["optionFee","Option Fee ($, optional)"]].map(([k,l])=>(
             <div key={k}><label style={s.label}>{l}</label>
               <input style={s.input} type="number" value={form[k]||""} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))}/></div>
+          ))}
+        </div>
+      )}
+      {(form.termType==="weekly")&&(
+        <div style={{display:"flex",flexDirection:"column",gap:12,borderTop:`1px solid ${C.line}`,paddingTop:12}}>
+          <div style={{...s.mono,fontSize:11,color:C.gold,letterSpacing:"0.08em",textTransform:"uppercase"}}>Event Details (weekly agreement)</div>
+          {[["eventName","Event Name"],["eventAddress","Event Address"],["eventCoordinator","Event Coordinator — phone or email"]].map(([k,l])=>(
+            <div key={k}><label style={s.label}>{l}</label>
+              <input style={s.input} value={form[k]||""} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))}/></div>
           ))}
         </div>
       )}
@@ -3350,6 +3360,10 @@ function leaseSections(t,termType){
     P("Rental Period & Location",[
       `Pick-up: ${t.startDate||B}.  Return: ${t.endDate||B}. The trailer must be returned on the agreed date and time; time is of the essence.`,
       `Pick-up & return location: ${t.operatingLocation||B}.`]);
+    P("Event Details",[
+      `Event name: ${t.eventName||B}.`,
+      `Event address: ${t.eventAddress||B}.`,
+      `Event coordinator phone number or email address: ${t.eventCoordinator||B}.`]);
     P("Payment",[
       `Weekly Rent (due in full before pick-up): ${weekly?fmt$(weekly):"$ "+B}.`,
       `Security Deposit (refundable — see Security Deposit): ${dep?fmt$(dep):"$ "+B}.`,
@@ -3504,8 +3518,11 @@ function LeaseContract({tenant,trailer,termType,onClose,onPrint,signed,onSign,te
         <button onClick={onPrint} style={{...s.btnGold,flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}><Icon d={ICONS.download} size={14} color={C.ink}/> Print / PDF</button>
       </div>
       <div id="petition-print" style={{background:"#fff",color:"#000",padding:"38px 32px",fontFamily:"'Times New Roman',Georgia,serif",fontSize:12.5,lineHeight:1.55}}>
-        <div style={{textAlign:"center",fontWeight:"bold",fontSize:15}}>{(termType==="rent-to-own"||termType==="rto")?"FOOD TRAILER LEASE AGREEMENT WITH OPTION TO PURCHASE":`FOOD TRAILER ${termType==="weekly"?"WEEKLY":termType==="annual"?"ANNUAL":"MONTHLY"} RENTAL AGREEMENT`}</div>
-        <div style={{textAlign:"center",fontSize:11,marginTop:3}}>{LESSOR_NAME} · {LESSOR_ADDR}</div>
+        <div style={{textAlign:"center",marginBottom:6}}>
+          <img src={LOGO_URI} alt="Texan Food Trailers Solution" style={{width:210,maxWidth:"60%",height:"auto",margin:"0 auto"}}/>
+        </div>
+        <div style={{textAlign:"center",fontWeight:"bold",fontSize:15,marginTop:2}}>{(termType==="rent-to-own"||termType==="rto")?"FOOD TRAILER LEASE AGREEMENT WITH OPTION TO PURCHASE":`FOOD TRAILER ${termType==="weekly"?"WEEKLY":termType==="annual"?"ANNUAL":"MONTHLY"} RENTAL AGREEMENT`}</div>
+        <div style={{textAlign:"center",fontSize:11,marginTop:3}}>Texan Food Trailers Solution · {LESSOR_ADDR} · {OWNER_PHONE} · {OWNER_EMAIL}</div>
         <hr style={{border:"none",borderTop:"1px solid #000",margin:"12px 0"}}/>
         {secs.map(sec=>(
           <div key={sec.n} style={{marginBottom:12}}>
@@ -4023,6 +4040,7 @@ const TERM_TEMPLATES=[
 ];
 function AdminForms({lang}){
   const [open,setOpen]=useState(null); // termType being viewed
+  const [autoPrint,setAutoPrint]=useState(false);
   const blankTenant={id:"TEMPLATE",name:"",address:"",dl:"",dob:"",startDate:"",endDate:"",monthlyRate:"",securityDeposit:"",lateFee:"",purchasePrice:""};
   const blankTrailer={name:"",vin:"",year:""};
   const doPrint=()=>{
@@ -4032,6 +4050,7 @@ function AdminForms({lang}){
     window.print();
     setTimeout(cleanup,1200);
   };
+  useEffect(()=>{ if(open&&autoPrint){ const tm=setTimeout(()=>{ doPrint(); setAutoPrint(false); },500); return ()=>clearTimeout(tm); } },[open,autoPrint]);
   if(open){
     return <LeaseContract tenant={blankTenant} trailer={blankTrailer} termType={open} templateMode onClose={()=>setOpen(null)} onPrint={doPrint}/>;
   }
@@ -4039,21 +4058,24 @@ function AdminForms({lang}){
     <div style={{display:"flex",flexDirection:"column",gap:12}} className="fadein">
       <div style={{...s.heading,fontSize:20,fontWeight:700}}>Forms</div>
       <div style={{fontSize:12.5,color:C.chromeDim,lineHeight:1.5}}>
-        Blank contract templates, all in one place. Open any one to read it, print it, or save it as a PDF to keep on file.
+        Blank contract templates, all in one place. Open any one to read it, or tap <strong style={{color:C.gold}}>Download</strong> to save it as a PDF.
         These are the same agreements that get auto-filled with the tenant's details when you approve an application.
       </div>
       {TERM_TEMPLATES.map(([tt,label])=>(
-        <button key={tt} onClick={()=>setOpen(tt)}
-          style={{...s.card,display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,cursor:"pointer",textAlign:"left",padding:"14px 16px"}}>
-          <div style={{display:"flex",alignItems:"center",gap:12}}>
+        <div key={tt} style={{...s.card,display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,padding:"14px 16px"}}>
+          <button onClick={()=>{setAutoPrint(false);setOpen(tt);}}
+            style={{display:"flex",alignItems:"center",gap:12,background:"none",border:"none",cursor:"pointer",textAlign:"left",flex:1,padding:0,color:C.paper}}>
             <Icon d={ICONS.contract} size={18} color={C.gold}/>
             <div>
               <div style={{fontWeight:600,fontSize:14,color:C.paper}}>{label}</div>
-              <div style={{fontSize:11,color:C.chromeDim,...s.mono}}>Blank · ready to print or save as PDF</div>
+              <div style={{fontSize:11,color:C.chromeDim,...s.mono}}>Blank · with logo · ready to download as PDF</div>
             </div>
-          </div>
-          <Icon d={ICONS.chevronRight||ICONS.back} size={16} color={C.chromeDim}/>
-        </button>
+          </button>
+          <button onClick={()=>{setAutoPrint(true);setOpen(tt);}} title="Download PDF"
+            style={{...s.btnGold,width:"auto",padding:"8px 12px",display:"flex",alignItems:"center",gap:6,fontSize:12}}>
+            <Icon d={ICONS.download} size={14} color={C.ink}/> Download
+          </button>
+        </div>
       ))}
     </div>
   );

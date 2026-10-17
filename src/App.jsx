@@ -279,31 +279,16 @@ const GLOBAL_CSS=`
   @keyframes spin{to{transform:rotate(360deg)}}
   @keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
   .fadein{animation:fadein 0.2s ease both;}
-  /* Animated splash intro */
-  .splash{position:fixed;inset:0;z-index:9999;background:radial-gradient(ellipse at center,#141417,#0b0b0d 70%);display:flex;align-items:center;justify-content:center;overflow:hidden;animation:splashOut 0.6s ease 3.3s forwards;}
-  .splash-inner{display:flex;flex-direction:column;align-items:center;gap:16px;position:relative;}
-  .splash-word{font-family:'Oswald',sans-serif;font-size:clamp(40px,13vw,76px);font-weight:700;letter-spacing:0.04em;color:#f3efe6;display:flex;position:relative;line-height:1;}
-  .splash-word .ch{display:inline-block;opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--dr)) scale(1.4);animation:chIn 0.7s cubic-bezier(.2,.9,.2,1) forwards;animation-delay:var(--d);
-    background:linear-gradient(180deg,#fff 0%,#dfe4ea 42%,#9aa3ad 60%,#eef2f6 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
-    filter:drop-shadow(0 2px 1px rgba(0,0,0,0.5));}
-  .splash-word.glow .ch{animation:chIn 0.7s cubic-bezier(.2,.9,.2,1) forwards, chGlow 0.9s ease 1.5s;}
-  .splash-sweep{position:absolute;top:-10%;left:-30%;width:28%;height:120%;pointer-events:none;
-    background:linear-gradient(100deg,transparent,rgba(120,255,200,0.0) 20%,rgba(150,255,210,0.85) 50%,rgba(120,255,200,0.0) 80%,transparent);
-    filter:blur(3px);opacity:0;transform:skewX(-14deg);animation:sweep 0.85s ease 1.45s;}
-  .splash-sub{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.42em;color:#c89b3c;opacity:0;animation:wordIn 0.6s ease 1.9s both;padding-left:0.42em;text-align:center;}
-  .splash-trailer{position:absolute;bottom:-60px;left:-40%;opacity:0;animation:driveIn 1.25s cubic-bezier(.25,.7,.25,1) 0.35s forwards;}
-  .splash-logo{width:300px;max-width:82vw;height:auto;border-radius:14px;opacity:0;animation:logoReveal 0.8s ease 2.35s both;filter:drop-shadow(0 0 22px rgba(200,155,60,0.5));}
-  .bm-animate{animation:markIn 1s cubic-bezier(.2,.8,.2,1) both;filter:drop-shadow(0 0 18px rgba(200,155,60,0.45));}
-  @keyframes markIn{from{opacity:0;transform:rotate(-14deg) scale(0.55)}to{opacity:1;transform:none}}
-  @keyframes chIn{to{opacity:1;transform:translate(0,0) rotate(0) scale(1)}}
-  @keyframes chGlow{0%{filter:drop-shadow(0 2px 1px rgba(0,0,0,0.5))}35%{filter:drop-shadow(0 0 14px rgba(150,255,210,0.95)) drop-shadow(0 0 26px rgba(120,255,190,0.6))}100%{filter:drop-shadow(0 2px 1px rgba(0,0,0,0.5))}}
-  @keyframes sweep{0%{opacity:0;left:-30%}15%{opacity:1}85%{opacity:1}100%{opacity:0;left:120%}}
-  @keyframes driveIn{0%{left:-40%;opacity:0}20%{opacity:1}72%{left:calc(50% - 46px);opacity:1}82%{left:calc(50% - 34px)}100%{left:calc(50% - 40px);opacity:0}}
-  @keyframes logoReveal{from{opacity:0;transform:scale(0.92)}to{opacity:1;transform:none}}
-  @keyframes wordIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  /* Animated splash intro — the real logo assembles from its own pieces */
+  .splash{position:fixed;inset:0;z-index:9999;background:radial-gradient(ellipse at center,#141417,#0b0b0d 70%);display:flex;align-items:center;justify-content:center;overflow:hidden;animation:splashOut 0.6s ease 3.2s forwards;}
+  .splash-stage{position:relative;animation:stageGlow 1.1s ease 2.0s both;}
+  .splash-tile{position:absolute;background-repeat:no-repeat;opacity:0;transform:var(--from);
+    animation:tileIn 0.9s cubic-bezier(.18,.85,.22,1) var(--d) forwards;will-change:transform,opacity;backface-visibility:hidden;}
+  @keyframes tileIn{0%{opacity:0;transform:var(--from)}14%{opacity:1}100%{opacity:1;transform:translate(0,0) rotate(0) scale(1)}}
+  @keyframes stageGlow{0%{filter:none}45%{filter:drop-shadow(0 0 16px rgba(200,155,60,0.55))}100%{filter:drop-shadow(0 4px 18px rgba(200,155,60,0.28))}}
   @keyframes splashOut{to{opacity:0;visibility:hidden}}
   @media (prefers-reduced-motion: reduce){
-    .splash-word .ch,.splash-sweep,.splash-trailer,.splash-sub,.splash-logo{animation-duration:0.01ms !important;animation-delay:0ms !important;opacity:1 !important;transform:none !important;}
+    .splash-tile{animation-duration:0.01ms !important;animation-delay:0ms !important;opacity:1 !important;transform:none !important;}
   }
   /* Print: when a legal petition is open, print only it, on white paper */
   @media print{
@@ -709,41 +694,52 @@ function BrandMark({size=120,animated=false}){
   );
 }
 function Splash(){
-  const word="TEXAN";
-  // each letter flies in from a different corner/edge, then settles
-  const origins=[
-    {dx:"-70vw",dy:"-60vh",dr:"-40deg"},
-    {dx:"60vw", dy:"-65vh",dr:"35deg"},
-    {dx:"-65vw",dy:"62vh", dr:"30deg"},
-    {dx:"68vw", dy:"58vh", dr:"-32deg"},
-    {dx:"0vw",  dy:"-75vh",dr:"18deg"},
-  ];
+  // The logo is sliced into a grid of tiles (CSS sprite of the real logo.png).
+  // Each tile flies in from a phone edge/corner and locks into its exact place,
+  // reassembling the real logo. The middle "trailer" band slides in from the
+  // left like it's driving; the "TEXAN" letter row flies in from the corners.
+  const COLS=6, ROWS=5;
+  const W=284, H=Math.round(W*607/820); // keep the logo's real aspect ratio
+  const tw=W/COLS, th=H/ROWS;
+  const tiles=[];
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      const fx=(c+0.5)/COLS, fy=(r+0.5)/ROWS;
+      let from, delay, rot=(Math.random()*10-5);
+      const isTrailer = (r===1||r===2) && (c>=1&&c<=4);         // the trailer band
+      const isLetters = (r===3);                                  // TEXAN wordmark row
+      const isBanner  = (r===4);                                  // FOOD TRAILER SOLUTION banner
+      if(isTrailer){
+        from=`translate(-128vw, ${(Math.random()*8-4)}px) rotate(0deg)`; // drive in from the left
+        delay=0.45 + (c-1)*0.07;
+      } else if(isLetters){
+        // letters converge from the four corners of the phone
+        const corners=[["-92vw","72vh"],["78vw","-82vh"],["-82vw","-78vh"],["82vw","72vh"],["-88vw","-72vh"],["90vw","78vh"]];
+        const cr=corners[c%corners.length];
+        from=`translate(${cr[0]}, ${cr[1]}) rotate(${rot}deg) scale(1.15)`;
+        delay=1.0 + c*0.08;                                        // assemble last, in the heart of the logo
+      } else if(isBanner){
+        from=`translate(${(fx-0.5)*40}vw, 90vh) rotate(${rot}deg)`; // banner rises from the bottom
+        delay=0.8 + c*0.04;
+      } else {
+        // top of the badge (Texas flag + skyline) drops in from the top
+        const dir = c<COLS/2 ? -1 : 1;
+        from=`translate(${dir*18}vw, -86vh) rotate(${rot}deg)`;
+        delay=0.1 + c*0.045;
+      }
+      tiles.push(
+        <div key={`${r}-${c}`} className="splash-tile" style={{
+          left:c*tw, top:r*th, width:Math.ceil(tw)+1, height:Math.ceil(th)+1,
+          backgroundImage:`url(${LOGO_URI})`, backgroundSize:`${W}px ${H}px`,
+          backgroundPosition:`${-c*tw}px ${-r*th}px`,
+          "--from":from, "--d":`${delay}s`,
+        }}/>
+      );
+    }
+  }
   return(
     <div className="splash">
-      <div className="splash-inner">
-        <div style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",gap:14}}>
-          <div className="splash-word glow" aria-label="TEXAN">
-            {word.split("").map((c,i)=>{
-              const o=origins[i%origins.length];
-              return <span key={i} className="ch" style={{"--dx":o.dx,"--dy":o.dy,"--dr":o.dr,"--d":`${0.15+i*0.14}s`}}>{c}</span>;
-            })}
-            <span className="splash-sweep"/>
-          </div>
-          <div className="splash-sub">FOOD&nbsp;TRAILER&nbsp;SOLUTION</div>
-          {/* trailer drives in and parks under the wordmark */}
-          <svg className="splash-trailer" width="92" height="56" viewBox="0 0 120 70" xmlns="http://www.w3.org/2000/svg">
-            <defs><linearGradient id="spGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#e7c05a"/><stop offset="1" stopColor="#b8862f"/></linearGradient></defs>
-            <rect x="10" y="16" width="86" height="34" rx="4" fill="#15151a" stroke="url(#spGold)" strokeWidth="2.4"/>
-            <rect x="20" y="24" width="34" height="16" rx="2" fill="#2a2a31" stroke="url(#spGold)" strokeWidth="1.4"/>
-            <path d="M54 24 h18 l-4 -8 h-10 z" fill="#1c1c22" stroke="url(#spGold)" strokeWidth="1.2"/>
-            <circle cx="96" cy="33" r="3" fill="url(#spGold)"/>
-            <path d="M96 50 h14" stroke="url(#spGold)" strokeWidth="2.4" strokeLinecap="round"/>
-            <circle cx="36" cy="56" r="7" fill="#111114" stroke="url(#spGold)" strokeWidth="2.6"/>
-            <circle cx="70" cy="56" r="7" fill="#111114" stroke="url(#spGold)" strokeWidth="2.6"/>
-          </svg>
-          <img src={LOGO_URI} alt="Texan Food Trailer Solution" className="splash-logo"/>
-        </div>
-      </div>
+      <div className="splash-stage" style={{width:W,height:H}}>{tiles}</div>
     </div>
   );
 }

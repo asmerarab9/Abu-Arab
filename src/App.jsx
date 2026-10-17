@@ -279,16 +279,36 @@ const GLOBAL_CSS=`
   @keyframes spin{to{transform:rotate(360deg)}}
   @keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
   .fadein{animation:fadein 0.2s ease both;}
-  /* Animated splash intro — the real logo assembles from its own pieces */
-  .splash{position:fixed;inset:0;z-index:9999;background:radial-gradient(ellipse at center,#141417,#0b0b0d 70%);display:flex;align-items:center;justify-content:center;overflow:hidden;animation:splashOut 0.6s ease 3.2s forwards;}
-  .splash-stage{position:relative;animation:stageGlow 1.1s ease 2.0s both;}
-  .splash-tile{position:absolute;background-repeat:no-repeat;opacity:0;transform:var(--from);
-    animation:tileIn 0.9s cubic-bezier(.18,.85,.22,1) var(--d) forwards;will-change:transform,opacity;backface-visibility:hidden;}
-  @keyframes tileIn{0%{opacity:0;transform:var(--from)}14%{opacity:1}100%{opacity:1;transform:translate(0,0) rotate(0) scale(1)}}
-  @keyframes stageGlow{0%{filter:none}45%{filter:drop-shadow(0 0 16px rgba(200,155,60,0.55))}100%{filter:drop-shadow(0 4px 18px rgba(200,155,60,0.28))}}
+  /* Animated splash intro — letters drop in, the trailer drives in with spinning wheels */
+  .splash{position:fixed;inset:0;z-index:9999;background:radial-gradient(ellipse at center,#15151a,#0b0b0d 72%);display:flex;align-items:center;justify-content:center;overflow:hidden;animation:splashOut 0.6s ease 3.4s forwards;}
+  .splash-inner{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;}
+  .splash-word{font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(46px,15vw,84px);letter-spacing:0.02em;line-height:1;display:flex;position:relative;}
+  .splash-word .ch{display:inline-block;opacity:0;transform:translateY(-120px) scale(1.5) rotate(var(--r));
+    animation:chDrop 0.72s cubic-bezier(.2,1.25,.35,1) var(--d) forwards;
+    background:linear-gradient(180deg,#ffffff 0%,#e3e8ee 38%,#9aa3ad 58%,#f2f5f8 78%,#b9c0c8 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+    -webkit-text-stroke:1.5px #223; filter:drop-shadow(0 3px 2px rgba(0,0,0,0.55));}
+  .splash-shine{position:absolute;top:-10%;left:-35%;width:30%;height:120%;pointer-events:none;
+    background:linear-gradient(100deg,transparent,rgba(255,226,150,0.0) 20%,rgba(255,224,150,0.9) 50%,rgba(255,226,150,0.0) 80%,transparent);
+    filter:blur(2px);opacity:0;transform:skewX(-16deg);animation:shine 0.9s ease 1.7s;}
+  .splash-sub{font-family:'Oswald',sans-serif;font-weight:600;font-size:clamp(12px,3.6vw,18px);letter-spacing:0.34em;color:#b5311f;
+    opacity:0;animation:subIn 0.6s ease 1.9s both;}
+  .splash-trailer{position:relative;opacity:0;margin-top:4px;
+    animation:drive 1.5s cubic-bezier(.33,.66,.3,1) 0.25s forwards;}
+  .spwheel{transform-box:fill-box;transform-origin:center;animation:wheelspin 1.5s linear 0.25s forwards;}
+  .splash-compose{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;animation:composeOut 0.5s ease 2.5s forwards;}
+  .splash-logo{position:absolute;top:50%;left:50%;width:300px;max-width:84vw;height:auto;opacity:0;transform:translate(-50%,-50%) scale(0.94);
+    animation:logoReveal 0.7s ease 2.55s forwards;filter:drop-shadow(0 6px 24px rgba(200,155,60,0.45));}
+  @keyframes chDrop{to{opacity:1;transform:translateY(0) scale(1) rotate(0)}}
+  @keyframes shine{0%{opacity:0;left:-35%}18%{opacity:1}82%{opacity:1}100%{opacity:0;left:120%}}
+  @keyframes subIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  @keyframes composeOut{to{opacity:0}}
+  @keyframes drive{0%{opacity:0;transform:translateX(-130vw)}18%{opacity:1}80%{transform:translateX(16px)}90%{transform:translateX(-6px)}100%{opacity:1;transform:translateX(0)}}
+  @keyframes wheelspin{from{transform:rotate(0)}to{transform:rotate(-1080deg)}}
+  @keyframes logoReveal{0%{opacity:0;transform:translate(-50%,-50%) scale(0.94)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
   @keyframes splashOut{to{opacity:0;visibility:hidden}}
   @media (prefers-reduced-motion: reduce){
-    .splash-tile{animation-duration:0.01ms !important;animation-delay:0ms !important;opacity:1 !important;transform:none !important;}
+    .splash-word .ch,.splash-shine,.splash-sub,.splash-trailer,.spwheel,.splash-logo{animation-duration:0.01ms !important;animation-delay:0ms !important;opacity:1 !important;transform:none !important;}
   }
   /* Print: when a legal petition is open, print only it, on white paper */
   @media print{
@@ -693,53 +713,73 @@ function BrandMark({size=120,animated=false}){
     </svg>
   );
 }
+function SplashTrailer(){
+  // A black food trailer styled to resemble the Texan logo's trailer, with spinning wheels.
+  const wheel=(cx)=>(
+    <g className="spwheel">
+      <circle cx={cx} cy="100" r="17" fill="#0e0e12" stroke="#c9a24a" strokeWidth="3"/>
+      <circle cx={cx} cy="100" r="9.5" fill="#20232a" stroke="#cfd3d8" strokeWidth="2"/>
+      <circle cx={cx} cy="100" r="2.6" fill="#cfd3d8"/>
+      {[0,45,90,135].map(a=>(
+        <line key={a} x1={cx} y1="100" x2={cx+9.5*Math.cos(a*Math.PI/180)} y2={100+9.5*Math.sin(a*Math.PI/180)} stroke="#aeb3bb" strokeWidth="2"/>
+      ))}
+    </g>
+  );
+  return(
+    <svg className="splash-trailer" width="230" height="150" viewBox="0 0 230 150" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="spGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#edcd6b"/><stop offset="1" stopColor="#a9792a"/></linearGradient>
+        <linearGradient id="spGlow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ffe6a6"/><stop offset="1" stopColor="#f2a73c"/></linearGradient>
+        <linearGradient id="spBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#1a1a20"/><stop offset="0.5" stopColor="#0c0c10"/><stop offset="1" stopColor="#141418"/></linearGradient>
+      </defs>
+      {/* chassis + hitch */}
+      <path d="M175 96 h34 l12 6" stroke="url(#spGold)" strokeWidth="3" fill="none" strokeLinecap="round"/>
+      {/* body */}
+      <rect x="28" y="34" width="150" height="62" rx="7" fill="url(#spBody)" stroke="url(#spGold)" strokeWidth="3"/>
+      {/* roof trim */}
+      <rect x="28" y="31" width="150" height="7" rx="3" fill="#cfd3d8"/>
+      {/* open serving awning */}
+      <path d="M40 36 L34 14 L104 14 L98 36 Z" fill="#17171c" stroke="url(#spGold)" strokeWidth="2.4" strokeLinejoin="round"/>
+      <line x1="34" y1="14" x2="30" y2="40" stroke="#cfd3d8" strokeWidth="2"/>
+      <line x1="104" y1="14" x2="100" y2="40" stroke="#cfd3d8" strokeWidth="2"/>
+      {/* lit serving window */}
+      <rect x="44" y="42" width="54" height="40" rx="3" fill="url(#spGlow)"/>
+      <rect x="48" y="60" width="46" height="8" fill="#d7b25a" opacity="0.7"/>
+      <rect x="52" y="48" width="12" height="12" fill="#b98a33" opacity="0.6"/>
+      <rect x="70" y="48" width="12" height="12" fill="#b98a33" opacity="0.6"/>
+      {/* dark reflective side + lights */}
+      <rect x="104" y="40" width="68" height="48" rx="3" fill="#101014"/>
+      <rect x="110" y="44" width="58" height="10" fill="#2a2d34" opacity="0.6"/>
+      <circle cx="116" cy="38" r="2.2" fill="#ffe08a"/><circle cx="140" cy="38" r="2.2" fill="#ffe08a"/><circle cx="164" cy="38" r="2.2" fill="#ffe08a"/>
+      {/* diamond-plate storage box */}
+      <rect x="150" y="60" width="26" height="28" rx="2" fill="#b8bdc4" stroke="#8a8f98" strokeWidth="1.5"/>
+      <path d="M152 66 l22 0 M152 72 l22 0 M152 78 l22 0" stroke="#9aa0a8" strokeWidth="1"/>
+      {/* fenders over wheels */}
+      <path d="M50 96 q20 -16 40 0" fill="none" stroke="url(#spGold)" strokeWidth="3"/>
+      {/* wheels (spin) */}
+      {wheel(62)}
+      {wheel(92)}
+    </svg>
+  );
+}
 function Splash(){
-  // The logo is sliced into a grid of tiles (CSS sprite of the real logo.png).
-  // Each tile flies in from a phone edge/corner and locks into its exact place,
-  // reassembling the real logo. The middle "trailer" band slides in from the
-  // left like it's driving; the "TEXAN" letter row flies in from the corners.
-  const COLS=6, ROWS=5;
-  const W=284, H=Math.round(W*607/820); // keep the logo's real aspect ratio
-  const tw=W/COLS, th=H/ROWS;
-  const tiles=[];
-  for(let r=0;r<ROWS;r++){
-    for(let c=0;c<COLS;c++){
-      const fx=(c+0.5)/COLS, fy=(r+0.5)/ROWS;
-      let from, delay, rot=(Math.random()*10-5);
-      const isTrailer = (r===1||r===2) && (c>=1&&c<=4);         // the trailer band
-      const isLetters = (r===3);                                  // TEXAN wordmark row
-      const isBanner  = (r===4);                                  // FOOD TRAILER SOLUTION banner
-      if(isTrailer){
-        from=`translate(-128vw, ${(Math.random()*8-4)}px) rotate(0deg)`; // drive in from the left
-        delay=0.45 + (c-1)*0.07;
-      } else if(isLetters){
-        // letters converge from the four corners of the phone
-        const corners=[["-92vw","72vh"],["78vw","-82vh"],["-82vw","-78vh"],["82vw","72vh"],["-88vw","-72vh"],["90vw","78vh"]];
-        const cr=corners[c%corners.length];
-        from=`translate(${cr[0]}, ${cr[1]}) rotate(${rot}deg) scale(1.15)`;
-        delay=1.0 + c*0.08;                                        // assemble last, in the heart of the logo
-      } else if(isBanner){
-        from=`translate(${(fx-0.5)*40}vw, 90vh) rotate(${rot}deg)`; // banner rises from the bottom
-        delay=0.8 + c*0.04;
-      } else {
-        // top of the badge (Texas flag + skyline) drops in from the top
-        const dir = c<COLS/2 ? -1 : 1;
-        from=`translate(${dir*18}vw, -86vh) rotate(${rot}deg)`;
-        delay=0.1 + c*0.045;
-      }
-      tiles.push(
-        <div key={`${r}-${c}`} className="splash-tile" style={{
-          left:c*tw, top:r*th, width:Math.ceil(tw)+1, height:Math.ceil(th)+1,
-          backgroundImage:`url(${LOGO_URI})`, backgroundSize:`${W}px ${H}px`,
-          backgroundPosition:`${-c*tw}px ${-r*th}px`,
-          "--from":from, "--d":`${delay}s`,
-        }}/>
-      );
-    }
-  }
+  const word="TEXAN";
+  const rots=["-8deg","6deg","-5deg","7deg","-6deg"];
   return(
     <div className="splash">
-      <div className="splash-stage" style={{width:W,height:H}}>{tiles}</div>
+      <div className="splash-inner">
+        <div className="splash-compose">
+          <div className="splash-word" aria-label="TEXAN">
+            {word.split("").map((c,i)=>(
+              <span key={i} className="ch" style={{"--d":`${0.95+i*0.12}s`,"--r":rots[i%rots.length]}}>{c}</span>
+            ))}
+            <span className="splash-shine"/>
+          </div>
+          <div className="splash-sub">FOOD&nbsp;TRAILER&nbsp;SOLUTION</div>
+          <SplashTrailer/>
+        </div>
+        <img src={LOGO_URI} alt="Texan Food Trailers Solution" className="splash-logo"/>
+      </div>
     </div>
   );
 }

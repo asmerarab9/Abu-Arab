@@ -279,36 +279,46 @@ const GLOBAL_CSS=`
   @keyframes spin{to{transform:rotate(360deg)}}
   @keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
   .fadein{animation:fadein 0.2s ease both;}
-  /* Animated splash intro — letters drop in, the trailer drives in with spinning wheels */
-  .splash{position:fixed;inset:0;z-index:9999;background:radial-gradient(ellipse at center,#15151a,#0b0b0d 72%);display:flex;align-items:center;justify-content:center;overflow:hidden;animation:splashOut 0.6s ease 3.4s forwards;}
-  .splash-inner{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;}
-  .splash-word{font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(46px,15vw,84px);letter-spacing:0.02em;line-height:1;display:flex;position:relative;}
+  /* Animated splash intro — letters drop in, phosphor light orbits TEXAN, trailer drives in cooking */
+  .splash{position:fixed;inset:0;z-index:9999;background:radial-gradient(ellipse at center,#15151a,#0b0b0d 72%);display:flex;align-items:center;justify-content:center;overflow:hidden;animation:splashOut 1.0s ease 6.9s forwards;}
+  .splash-inner{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;}
+  .splash-wordwrap{position:relative;padding:14px 20px;}
+  .splash-word{font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(46px,15vw,84px);letter-spacing:0.02em;line-height:1;display:flex;}
   .splash-word .ch{display:inline-block;opacity:0;transform:translateY(-120px) scale(1.5) rotate(var(--r));
-    animation:chDrop 0.72s cubic-bezier(.2,1.25,.35,1) var(--d) forwards;
+    animation:chDrop 1.44s cubic-bezier(.2,1.25,.35,1) var(--d) forwards;
     background:linear-gradient(180deg,#ffffff 0%,#e3e8ee 38%,#9aa3ad 58%,#f2f5f8 78%,#b9c0c8 100%);
     -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
     -webkit-text-stroke:1.5px #223; filter:drop-shadow(0 3px 2px rgba(0,0,0,0.55));}
-  .splash-shine{position:absolute;top:-10%;left:-35%;width:30%;height:120%;pointer-events:none;
-    background:linear-gradient(100deg,transparent,rgba(255,226,150,0.0) 20%,rgba(255,224,150,0.9) 50%,rgba(255,226,150,0.0) 80%,transparent);
-    filter:blur(2px);opacity:0;transform:skewX(-16deg);animation:shine 0.9s ease 1.7s;}
+  /* phosphorescent light running around the word */
+  .splash-orbit{position:absolute;width:20px;height:20px;border-radius:50%;pointer-events:none;opacity:0;
+    background:radial-gradient(circle,#ddffea 0%,#4dffa0 38%,rgba(77,255,160,0) 72%);
+    box-shadow:0 0 16px 7px rgba(77,255,160,0.85),0 0 34px 14px rgba(77,255,160,0.45);
+    animation:orbit 2.0s linear 2.1s infinite, orbitFade 0.6s ease 2.1s forwards;}
+  .splash-orbit.o2{animation:orbit2 2.0s linear 2.1s infinite, orbitFade 0.6s ease 2.1s forwards;}
   .splash-sub{font-family:'Oswald',sans-serif;font-weight:600;font-size:clamp(12px,3.6vw,18px);letter-spacing:0.34em;color:#b5311f;
-    opacity:0;animation:subIn 0.6s ease 1.9s both;}
-  .splash-trailer{position:relative;opacity:0;margin-top:4px;
-    animation:drive 1.5s cubic-bezier(.33,.66,.3,1) 0.25s forwards;}
-  .spwheel{transform-box:fill-box;transform-origin:center;animation:wheelspin 1.5s linear 0.25s forwards;}
-  .splash-compose{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;animation:composeOut 0.5s ease 2.5s forwards;}
+    opacity:0;animation:subIn 1.2s ease 3.9s both;}
+  .splash-trailer{position:relative;opacity:0;margin-top:2px;
+    animation:drive 3.0s cubic-bezier(.33,.66,.3,1) 0.5s forwards;}
+  .spwheel{transform-box:fill-box;transform-origin:center;animation:wheelspin 3.0s linear 0.5s forwards;}
+  .spsmoke circle{opacity:0;transform-box:fill-box;transform-origin:center;animation:puff 2.6s ease-out 3.6s infinite;}
+  .spsmoke circle:nth-child(2){animation-delay:4.5s}
+  .spsmoke circle:nth-child(3){animation-delay:5.4s}
+  .splash-compose{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;animation:composeOut 0.8s ease 5.3s forwards;}
   .splash-logo{position:absolute;top:50%;left:50%;width:300px;max-width:84vw;height:auto;opacity:0;transform:translate(-50%,-50%) scale(0.94);
-    animation:logoReveal 0.7s ease 2.55s forwards;filter:drop-shadow(0 6px 24px rgba(200,155,60,0.45));}
+    animation:logoReveal 1.0s ease 5.5s forwards;filter:drop-shadow(0 6px 24px rgba(200,155,60,0.45));}
   @keyframes chDrop{to{opacity:1;transform:translateY(0) scale(1) rotate(0)}}
-  @keyframes shine{0%{opacity:0;left:-35%}18%{opacity:1}82%{opacity:1}100%{opacity:0;left:120%}}
+  @keyframes orbitFade{to{opacity:1}}
+  @keyframes orbit{0%{top:-10px;left:-10px}25%{top:-10px;left:calc(100% - 10px)}50%{top:calc(100% - 10px);left:calc(100% - 10px)}75%{top:calc(100% - 10px);left:-10px}100%{top:-10px;left:-10px}}
+  @keyframes orbit2{0%{top:calc(100% - 10px);left:calc(100% - 10px)}25%{top:calc(100% - 10px);left:-10px}50%{top:-10px;left:-10px}75%{top:-10px;left:calc(100% - 10px)}100%{top:calc(100% - 10px);left:calc(100% - 10px)}}
   @keyframes subIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
   @keyframes composeOut{to{opacity:0}}
-  @keyframes drive{0%{opacity:0;transform:translateX(-130vw)}18%{opacity:1}80%{transform:translateX(16px)}90%{transform:translateX(-6px)}100%{opacity:1;transform:translateX(0)}}
+  @keyframes drive{0%{opacity:0;transform:translateX(-130vw)}18%{opacity:1}82%{transform:translateX(16px)}92%{transform:translateX(-6px)}100%{opacity:1;transform:translateX(0)}}
   @keyframes wheelspin{from{transform:rotate(0)}to{transform:rotate(-1080deg)}}
+  @keyframes puff{0%{opacity:0;transform:translateY(0) scale(0.5)}25%{opacity:0.55}100%{opacity:0;transform:translateY(-40px) translateX(-6px) scale(1.7)}}
   @keyframes logoReveal{0%{opacity:0;transform:translate(-50%,-50%) scale(0.94)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
   @keyframes splashOut{to{opacity:0;visibility:hidden}}
   @media (prefers-reduced-motion: reduce){
-    .splash-word .ch,.splash-shine,.splash-sub,.splash-trailer,.spwheel,.splash-logo{animation-duration:0.01ms !important;animation-delay:0ms !important;opacity:1 !important;transform:none !important;}
+    .splash-word .ch,.splash-orbit,.splash-sub,.splash-trailer,.spwheel,.spsmoke circle,.splash-logo{animation-duration:0.01ms !important;animation-delay:0ms !important;opacity:1 !important;transform:none !important;}
   }
   /* Print: when a legal petition is open, print only it, on white paper */
   @media print{
@@ -754,6 +764,18 @@ function SplashTrailer(){
       {/* diamond-plate storage box */}
       <rect x="150" y="60" width="26" height="28" rx="2" fill="#b8bdc4" stroke="#8a8f98" strokeWidth="1.5"/>
       <path d="M152 66 l22 0 M152 72 l22 0 M152 78 l22 0" stroke="#9aa0a8" strokeWidth="1"/>
+      {/* rooftop sign board */}
+      <rect x="66" y="16" width="74" height="17" rx="3" fill="#0d0d10" stroke="url(#spGold)" strokeWidth="2"/>
+      <text x="103" y="29" textAnchor="middle" fontFamily="'Oswald',Arial,sans-serif" fontWeight="700" fontSize="12" letterSpacing="1" fill="#edcd6b">TEXAN</text>
+      {/* exhaust stack on the roof */}
+      <rect x="150" y="18" width="9" height="15" rx="2" fill="#2a2d34" stroke="#8a8f98" strokeWidth="1.3"/>
+      <ellipse cx="154.5" cy="18" rx="5.5" ry="2.4" fill="#3a3d45"/>
+      {/* cooking smoke */}
+      <g className="spsmoke">
+        <circle cx="154" cy="14" r="5" fill="#cfd3d8"/>
+        <circle cx="156" cy="14" r="6" fill="#bfc4cc"/>
+        <circle cx="152" cy="14" r="5.5" fill="#d7dbe1"/>
+      </g>
       {/* fenders over wheels */}
       <path d="M50 96 q20 -16 40 0" fill="none" stroke="url(#spGold)" strokeWidth="3"/>
       {/* wheels (spin) */}
@@ -769,11 +791,14 @@ function Splash(){
     <div className="splash">
       <div className="splash-inner">
         <div className="splash-compose">
-          <div className="splash-word" aria-label="TEXAN">
-            {word.split("").map((c,i)=>(
-              <span key={i} className="ch" style={{"--d":`${0.95+i*0.12}s`,"--r":rots[i%rots.length]}}>{c}</span>
-            ))}
-            <span className="splash-shine"/>
+          <div className="splash-wordwrap">
+            <div className="splash-word" aria-label="TEXAN">
+              {word.split("").map((c,i)=>(
+                <span key={i} className="ch" style={{"--d":`${1.9+i*0.24}s`,"--r":rots[i%rots.length]}}>{c}</span>
+              ))}
+            </div>
+            <span className="splash-orbit"/>
+            <span className="splash-orbit o2"/>
           </div>
           <div className="splash-sub">FOOD&nbsp;TRAILER&nbsp;SOLUTION</div>
           <SplashTrailer/>
@@ -794,7 +819,7 @@ export default function App(){
   const [view,setView]=useState("public"); // public | login
   const [connStatus,setConnStatus]=useState("Connecting to database…");
   const [showSplash,setShowSplash]=useState(true);
-  useEffect(()=>{ const tm=setTimeout(()=>setShowSplash(false),4000); return ()=>clearTimeout(tm); },[]);
+  useEffect(()=>{ const tm=setTimeout(()=>setShowSplash(false),7900); return ()=>clearTimeout(tm); },[]);
 
   useEffect(()=>{
     (async()=>{

@@ -766,7 +766,7 @@ function SplashTrailer(){
       <path d="M152 66 l22 0 M152 72 l22 0 M152 78 l22 0" stroke="#9aa0a8" strokeWidth="1"/>
       {/* rooftop sign board */}
       <rect x="66" y="16" width="74" height="17" rx="3" fill="#0d0d10" stroke="url(#spGold)" strokeWidth="2"/>
-      <text x="103" y="29" textAnchor="middle" fontFamily="'Oswald',Arial,sans-serif" fontWeight="700" fontSize="12" letterSpacing="1" fill="#edcd6b">TEXAN</text>
+      <text x="103" y="28.5" textAnchor="middle" fontFamily="'Oswald',Arial,sans-serif" fontWeight="700" fontSize="10" letterSpacing="0.5" fill="#edcd6b">JUST DO IT</text>
       {/* exhaust stack on the roof */}
       <rect x="150" y="18" width="9" height="15" rx="2" fill="#2a2d34" stroke="#8a8f98" strokeWidth="1.3"/>
       <ellipse cx="154.5" cy="18" rx="5.5" ry="2.4" fill="#3a3d45"/>

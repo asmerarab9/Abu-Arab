@@ -1141,20 +1141,12 @@ function TrailerFloorPlan({trailer}){
 }
 
 function PublicTrailerDetail({trailer,onBack,onInquire,onApply,onView}){
-  const [color,setColor]=useState(BODY_COLORS[0].id);
-  const [equip,setEquip]=useState(["griddle"]);
-  const [interior,setInterior]=useState(false);
   const [showInfo,setShowInfo]=useState(false);
-  const [showPlan,setShowPlan]=useState(false);
   useEffect(()=>{ onView&&onView(); },[]); // count one public view
   const open=isOpen(trailer.status);
   const rentable=isRentable(trailer.status);
   const st=PUBLIC_STATUS[trailer.status]||PUBLIC_STATUS["rent-sale"];
-  const colorUp=(BODY_COLORS.find(c=>c.id===color)||{}).up||0;
-  const equipUp=EQUIP_OPTIONS.filter(o=>equip.includes(o.id)).reduce((a,o)=>a+o.up,0);
   const base=trailer.purchasePrice||0;
-  const total=base+colorUp+equipUp;
-  const toggle=id=>setEquip(e=>e.includes(id)?e.filter(x=>x!==id):[...e,id]);
   const h2={fontFamily:"'Oswald',sans-serif",fontSize:12,fontWeight:600,letterSpacing:"0.15em",textTransform:"uppercase",color:C.gold,margin:"24px 0 12px"};
 
   return(
@@ -1187,66 +1179,22 @@ function PublicTrailerDetail({trailer,onBack,onInquire,onApply,onView}){
             : <div style={{flex:1,padding:"15px",borderRadius:4,border:`1px solid ${C.line}`,textAlign:"center",...s.mono,fontSize:11,color:st.col}}>{st.label}</div>}
         </div>
 
-        <button onClick={()=>setShowPlan(true)} style={{...s.btnGold,width:"100%",marginTop:10,background:"none",border:`1.5px solid ${C.gold}`,color:C.gold,padding:"13px",display:"flex",alignItems:"center",justifyContent:"center",gap:8,fontSize:13}}>
-          <Icon d={ICONS.trailer} size={16} color={C.gold}/> Floor Plan (Top View)
-        </button>
-
-        <div style={h2}>Visualize & Customize (3D)</div>
-        <Trailer3DViewer trailer={trailer} color={color} equip={equip} interior={interior}/>
-
-        <div style={{display:"flex",gap:8,marginTop:12}}>
-          {[["Exterior",false],["Interior & Kitchen",true]].map(([lbl,v])=>(
-            <button key={lbl} onClick={()=>setInterior(v)}
-              style={{flex:1,padding:"10px",borderRadius:7,cursor:"pointer",...s.mono,fontSize:11,letterSpacing:"0.05em",
-                background:interior===v?C.gold:"none",color:interior===v?C.ink:C.paper,border:`1px solid ${interior===v?C.gold:C.line}`,fontWeight:600}}>
-              {lbl}
-            </button>
-          ))}
-        </div>
-
-        <div style={h2}>Body Color</div>
-        <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
-          {BODY_COLORS.map(c=>(
-            <button key={c.id} onClick={()=>setColor(c.id)} title={c.label}
-              style={{display:"flex",flexDirection:"column",alignItems:"center",gap:5,background:"none",border:"none",cursor:"pointer",padding:0}}>
-              <span style={{width:40,height:40,borderRadius:"50%",background:c.hex,border:`2px solid ${color===c.id?C.gold:C.line}`,boxShadow:color===c.id?`0 0 0 2px ${C.ink},0 0 10px ${C.gold}55`:"none"}}/>
-              <span style={{fontSize:9,...s.mono,color:color===c.id?C.gold:C.chromeDim}}>{c.up?"+"+fmt$(c.up):"std"}</span>
-            </button>
-          ))}
-        </div>
-
-        <div style={h2}>Equipment Package</div>
-        <div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {EQUIP_OPTIONS.map(op=>{
-            const on=equip.includes(op.id);
-            return(
-              <button key={op.id} onClick={()=>toggle(op.id)}
-                style={{display:"flex",alignItems:"center",gap:11,background:on?C.gold+"14":C.steel,border:`1px solid ${on?C.gold:C.line}`,borderRadius:8,padding:"12px 14px",cursor:"pointer",textAlign:"left"}}>
-                <span style={{width:20,height:20,borderRadius:5,flexShrink:0,border:`2px solid ${on?C.gold:C.chromeDim}`,background:on?C.gold:"none",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                  {on&&<Icon d={ICONS.check} size={12} color={C.ink}/>}
-                </span>
-                <span style={{flex:1,fontSize:13,color:C.paper}}>{op.label}</span>
-                <span style={{...s.mono,fontSize:11,color:on?C.gold:C.chromeDim}}>{op.up?"+"+fmt$(op.up):"included"}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        <div style={{marginTop:18,background:C.steel,border:`1px solid ${C.lineBright}`,borderRadius:10,padding:"16px 18px"}}>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:C.chromeDim,marginBottom:6}}><span>Base purchase price</span><span style={s.mono}>{fmt$(base)}</span></div>
-          {colorUp>0&&<div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:C.chromeDim,marginBottom:6}}><span>Finish upgrade</span><span style={s.mono}>+{fmt$(colorUp)}</span></div>}
-          {equipUp>0&&<div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:C.chromeDim,marginBottom:6}}><span>Equipment add-ons</span><span style={s.mono}>+{fmt$(equipUp)}</span></div>}
-          <div style={{borderTop:`1px solid ${C.line}`,marginTop:8,paddingTop:10,display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
-            <span style={{fontSize:12,color:C.paper,fontWeight:600}}>Your configuration</span>
-            <span style={{...s.mono,fontSize:22,color:C.gold,fontWeight:600}}>{fmt$(total)}</span>
+        {open&&(base>0||trailer.dailyRate||trailer.monthlyRate)&&(
+          <div style={{marginTop:18,background:C.steel,border:`1px solid ${C.lineBright}`,borderRadius:10,padding:"16px 18px"}}>
+            {isForSale(trailer.status)&&base>0&&(
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
+                <span style={{fontSize:13,color:C.paper,fontWeight:600}}>Purchase price</span>
+                <span style={{...s.mono,fontSize:22,color:C.gold,fontWeight:600}}>{fmt$(base)}</span>
+              </div>
+            )}
+            {rentable&&(trailer.dailyRate||trailer.monthlyRate)&&(
+              <div style={{display:"flex",gap:14,marginTop:(isForSale(trailer.status)&&base>0)?10:0,flexWrap:"wrap"}}>
+                {trailer.dailyRate?<span style={{...s.mono,fontSize:12.5,color:C.paperDim}}>Rent {fmt$(trailer.dailyRate)}/day</span>:null}
+                {trailer.monthlyRate?<span style={{...s.mono,fontSize:12.5,color:C.paperDim}}>· {fmt$(trailer.monthlyRate)}/month</span>:null}
+              </div>
+            )}
           </div>
-          {rentable&&(
-            <div style={{display:"flex",gap:14,marginTop:10,flexWrap:"wrap"}}>
-              {trailer.dailyRate?<span style={{...s.mono,fontSize:11,color:C.chromeDim}}>Rent {fmt$(trailer.dailyRate)}/day</span>:null}
-              {trailer.monthlyRate?<span style={{...s.mono,fontSize:11,color:C.chromeDim}}>· {fmt$(trailer.monthlyRate)}/month</span>:null}
-            </div>
-          )}
-        </div>
+        )}
 
         <div style={h2}>Specifications</div>
         <div style={{display:"flex",flexDirection:"column",gap:6,background:C.steel,border:`1px solid ${C.line}`,borderRadius:8,padding:"14px 16px"}}>
@@ -1260,26 +1208,7 @@ function PublicTrailerDetail({trailer,onBack,onInquire,onApply,onView}){
 
         {open && <button onClick={()=>onApply&&onApply()} style={{...s.btnGold,marginTop:24}}>Apply {rentable?"to Rent":"to Buy"} This Trailer</button>}
         <button onClick={()=>onInquire(trailer)} style={{...s.btnGold,marginTop:10,background:"none",border:`1px solid ${C.lineBright}`,color:C.paper}}>Inquire / Ask a Question</button>
-        <div style={{textAlign:"center",fontSize:10.5,color:C.chromeDim,marginTop:10,lineHeight:1.5}}>
-          The 3D preview is a visual configurator. Final specs and pricing are confirmed with you directly.
-        </div>
       </div>
-
-      {/* Floor Plan modal */}
-      {showPlan&&(
-        <div onClick={()=>setShowPlan(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:120,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
-          <div onClick={e=>e.stopPropagation()} style={{background:`linear-gradient(160deg,${C.steel2},${C.ink2})`,border:`1px solid ${C.gold}55`,borderRadius:16,maxWidth:600,width:"100%",maxHeight:"90vh",overflowY:"auto",padding:"16px 16px 20px",boxShadow:`0 20px 60px rgba(0,0,0,0.6)`}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-              <div style={{fontFamily:"'Oswald',sans-serif",fontSize:16,fontWeight:700,color:C.paper}}>Floor Plan</div>
-              <button onClick={()=>setShowPlan(false)} style={{background:"rgba(0,0,0,0.4)",border:"none",cursor:"pointer",padding:6,borderRadius:99}}><Icon d={ICONS.close} size={18} color={C.paper}/></button>
-            </div>
-            <TrailerFloorPlan trailer={trailer}/>
-            <div style={{fontSize:11.5,color:C.chromeDim,lineHeight:1.6,marginTop:12,textAlign:"center"}}>
-              Top-down layout generated from this trailer's equipment and size. Actual placement may vary slightly.
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Professional Info modal */}
       {showInfo&&(

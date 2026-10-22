@@ -912,7 +912,7 @@ const PUBLIC_STATUS={
   "rent":     {label:"For Rent",       col:C.good},
   "sale":     {label:"For Sale",       col:C.blue},
   "rent-sale":{label:"Rent or Sale",   col:C.gold},
-  "rented":   {label:"Not Available",  col:C.chromeDim},
+  "rented":   {label:"Not Available",  col:"#ff3b30"},
   "sold":     {label:"Sold",           col:C.danger},
 };
 // which statuses are still "open" to the public (apply + see pricing)
@@ -924,6 +924,8 @@ const PUBLIC_SERVICES=[
   {icon:ICONS.credit,title:"Rent-to-Own",desc:"Lease now and apply your payments toward ownership. Ask us about current rent-to-own units."},
   {icon:ICONS.truck,title:"Trailer Transport",desc:"We deliver and relocate trailers to your site. Request a transport quote any time."},
   {icon:ICONS.wrench,title:"Repair & Inspection",desc:"On-site maintenance, equipment repair, and pre-event inspections for your food trailer."},
+  {icon:ICONS.credit,title:"POS System",desc:"Point-of-sale setup for your trailer — take card payments, track sales, and run your menu."},
+  {icon:ICONS.trailer,title:"Equipment & Parts",desc:"Grills, fryers, fridges, hoods, generators and more — buy the equipment your trailer needs."},
 ];
 
 /* ── 3D configurator options (scalable — shared by every trailer) ── */
@@ -1074,11 +1076,76 @@ function PhotoCarousel({photos,alt}){
   );
 }
 
+/* ── Auto top-down Floor Plan — generated from the trailer's equipment + length ── */
+function TrailerFloorPlan({trailer}){
+  const eq=trailer.equip||{};
+  const has=k=>!!eq[k];
+  const lenNum=parseInt(String(trailer.length||"").replace(/[^0-9]/g,""),10)||16;
+  const W=560, H=300;
+  const bx=70, by=54, bw=W-150, bh=H-120;       // interior rectangle
+  const zone=(x,y,w,h,label,fill,stroke)=>(
+    <g key={label+x+y}>
+      <rect x={x} y={y} width={w} height={h} rx="5" fill={fill} stroke={stroke} strokeWidth="2"/>
+      <text x={x+w/2} y={y+h/2+4} textAnchor="middle" fontFamily="'Oswald',Arial" fontWeight="600" fontSize={Math.min(13,Math.max(9,w/Math.max(label.length,6)*1.5))} fill="#f3efe6">{label}</text>
+    </g>
+  );
+  // Cook line across the back (top) wall
+  const cook=[["griddle","Griddle"],["charbroiler","Char-broiler"],["range","Range"],["fryer","Fryer"]].filter(([k])=>has(k));
+  const cold=[["fridge","Refrigerator"],["freezer","Freezer"]].filter(([k])=>has(k));
+  const leftCol=[];
+  if(has("sink3")) leftCol.push("3-Comp Sink");
+  if(has("handsink")) leftCol.push("Hand Sink");
+  if(has("preptable")) leftCol.push("Prep Table");
+  if(has("steamtable")) leftCol.push("Steam Table");
+  if(has("warming")) leftCol.push("Warmer");
+  const cookEls=[]; const cookW=bw-20;
+  cook.forEach(([,lbl],i)=>{ const w=cookW/Math.max(cook.length,1); cookEls.push(zone(bx+10+i*w, by+8, w-6, 34, lbl, "#5a2322", "#c0532e")); });
+  const coldEls=[]; cold.forEach(([,lbl],i)=>{ coldEls.push(zone(bx+bw-74, by+52+i*44, 66, 38, lbl, "#1f3a52", "#3b82b6")); });
+  const leftEls=[]; leftCol.slice(0,3).forEach((lbl,i)=>{ leftEls.push(zone(bx+8, by+52+i*44, 86, 38, lbl, "#1f3f3a", "#2f9e8f")); });
+  const showHood=has("hood")||has("firesupp");
+  return(
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{maxWidth:560,display:"block",margin:"0 auto",background:"#101014",borderRadius:12,border:`1px solid ${C.line}`}} xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="fpGlow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ffe6a6"/><stop offset="1" stopColor="#f2a73c"/></linearGradient></defs>
+      <text x={W/2} y="26" textAnchor="middle" fontFamily="'Oswald',Arial" fontWeight="700" fontSize="15" fill="#c89b3c" letterSpacing="2">FLOOR PLAN · TOP VIEW</text>
+      <text x={W/2} y="42" textAnchor="middle" fontFamily="'JetBrains Mono',monospace" fontSize="10" fill="#8a8f98">{trailer.nickname||trailer.name}{trailer.length?` · ${trailer.length}`:""}</text>
+      {/* hitch */}
+      <path d={`M${bx-46} ${by+bh/2} L${bx} ${by+bh/2-14} L${bx} ${by+bh/2+14} Z`} fill="#17171c" stroke="#c89b3c" strokeWidth="2"/>
+      <text x={bx-24} y={by+bh/2-20} textAnchor="middle" fontFamily="'JetBrains Mono'" fontSize="8" fill="#8a8f98">HITCH</text>
+      {has("generator")&&zone(bx-50, by+bh/2+22, 48, 26, "Gen", "#2a2d33", "#8a8f98")}
+      {/* body */}
+      <rect x={bx} y={by} width={bw} height={bh} rx="8" fill="#15151a" stroke="#c89b3c" strokeWidth="2.5"/>
+      {/* back-wall cook line label */}
+      <text x={bx+bw/2} y={by-4} textAnchor="middle" fontFamily="'JetBrains Mono'" fontSize="8" fill="#8a8f98">COOK LINE</text>
+      {showHood&&<rect x={bx+6} y={by+4} width={bw-12} height={42} rx="4" fill="rgba(200,155,60,0.12)" stroke="#c89b3c" strokeDasharray="4 3" strokeWidth="1.3"/>}
+      {cookEls}
+      {cookEls.length===0&&zone(bx+10, by+8, bw-20, 34, "Cook Line", "#5a2322", "#c0532e")}
+      {coldEls}
+      {leftEls}
+      {/* serving window along the front (bottom) */}
+      <rect x={bx+bw*0.18} y={by+bh-6} width={bw*0.5} height="9" fill="url(#fpGlow)" rx="2"/>
+      <text x={bx+bw*0.18+bw*0.25} y={by+bh+18} textAnchor="middle" fontFamily="'Oswald',Arial" fontWeight="600" fontSize="11" fill="#ffd27a">SERVING WINDOW</text>
+      {/* rear door */}
+      <rect x={bx+bw-5} y={by+bh*0.62} width="10" height={bh*0.3} fill="#2a2d33" stroke="#c89b3c" strokeWidth="1.5"/>
+      <text x={bx+bw+14} y={by+bh*0.62+bh*0.16} textAnchor="middle" fontFamily="'JetBrains Mono'" fontSize="8" fill="#8a8f98" transform={`rotate(90 ${bx+bw+14} ${by+bh*0.62+bh*0.16})`}>DOOR</text>
+      {/* wheels */}
+      <rect x={bx+bw*0.3} y={by+bh+2} width="40" height="9" rx="3" fill="#0e0e12" stroke="#555"/>
+      <rect x={bx+bw*0.55} y={by+bh+2} width="40" height="9" rx="3" fill="#0e0e12" stroke="#555"/>
+      {/* legend */}
+      <g fontFamily="'JetBrains Mono'" fontSize="8.5">
+        <rect x={bx} y={H-20} width="10" height="10" rx="2" fill="#5a2322" stroke="#c0532e"/><text x={bx+14} y={H-11} fill="#8a8f98">Cooking</text>
+        <rect x={bx+74} y={H-20} width="10" height="10" rx="2" fill="#1f3a52" stroke="#3b82b6"/><text x={bx+88} y={H-11} fill="#8a8f98">Cold</text>
+        <rect x={bx+134} y={H-20} width="10" height="10" rx="2" fill="#1f3f3a" stroke="#2f9e8f"/><text x={bx+148} y={H-11} fill="#8a8f98">Prep / Sinks</text>
+      </g>
+    </svg>
+  );
+}
+
 function PublicTrailerDetail({trailer,onBack,onInquire,onApply,onView}){
   const [color,setColor]=useState(BODY_COLORS[0].id);
   const [equip,setEquip]=useState(["griddle"]);
   const [interior,setInterior]=useState(false);
   const [showInfo,setShowInfo]=useState(false);
+  const [showPlan,setShowPlan]=useState(false);
   useEffect(()=>{ onView&&onView(); },[]); // count one public view
   const open=isOpen(trailer.status);
   const rentable=isRentable(trailer.status);
@@ -1119,6 +1186,10 @@ function PublicTrailerDetail({trailer,onBack,onInquire,onApply,onView}){
               </button>
             : <div style={{flex:1,padding:"15px",borderRadius:4,border:`1px solid ${C.line}`,textAlign:"center",...s.mono,fontSize:11,color:st.col}}>{st.label}</div>}
         </div>
+
+        <button onClick={()=>setShowPlan(true)} style={{...s.btnGold,width:"100%",marginTop:10,background:"none",border:`1.5px solid ${C.gold}`,color:C.gold,padding:"13px",display:"flex",alignItems:"center",justifyContent:"center",gap:8,fontSize:13}}>
+          <Icon d={ICONS.trailer} size={16} color={C.gold}/> Floor Plan (Top View)
+        </button>
 
         <div style={h2}>Visualize & Customize (3D)</div>
         <Trailer3DViewer trailer={trailer} color={color} equip={equip} interior={interior}/>
@@ -1193,6 +1264,22 @@ function PublicTrailerDetail({trailer,onBack,onInquire,onApply,onView}){
           The 3D preview is a visual configurator. Final specs and pricing are confirmed with you directly.
         </div>
       </div>
+
+      {/* Floor Plan modal */}
+      {showPlan&&(
+        <div onClick={()=>setShowPlan(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:120,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+          <div onClick={e=>e.stopPropagation()} style={{background:`linear-gradient(160deg,${C.steel2},${C.ink2})`,border:`1px solid ${C.gold}55`,borderRadius:16,maxWidth:600,width:"100%",maxHeight:"90vh",overflowY:"auto",padding:"16px 16px 20px",boxShadow:`0 20px 60px rgba(0,0,0,0.6)`}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+              <div style={{fontFamily:"'Oswald',sans-serif",fontSize:16,fontWeight:700,color:C.paper}}>Floor Plan</div>
+              <button onClick={()=>setShowPlan(false)} style={{background:"rgba(0,0,0,0.4)",border:"none",cursor:"pointer",padding:6,borderRadius:99}}><Icon d={ICONS.close} size={18} color={C.paper}/></button>
+            </div>
+            <TrailerFloorPlan trailer={trailer}/>
+            <div style={{fontSize:11.5,color:C.chromeDim,lineHeight:1.6,marginTop:12,textAlign:"center"}}>
+              Top-down layout generated from this trailer's equipment and size. Actual placement may vary slightly.
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Professional Info modal */}
       {showInfo&&(
@@ -1289,14 +1376,6 @@ function PublicLanding({db,updateDB,onLogin}){
         <div style={{fontSize:13,color:C.paperDim,lineHeight:1.6,maxWidth:360,margin:"0 auto"}}>
           {t("pHeroSub",lang)}
         </div>
-        <div style={{display:"flex",gap:10,justifyContent:"center",marginTop:22,flexWrap:"wrap"}}>
-          <button onClick={()=>setApplyFor("")} style={{...s.btnGold,width:"auto",padding:"12px 22px"}}>{t("pApplyRent",lang)}</button>
-          <a href="#fleet" style={{...s.btnGold,width:"auto",padding:"12px 22px",textDecoration:"none",display:"inline-block",background:"none",border:`1px solid ${C.lineBright}`,color:C.paper}}>{t("pViewFleet",lang)}</a>
-          <button onClick={()=>setInquiry({name:"your services",_general:true})}
-            style={{background:"none",border:`1px solid ${C.lineBright}`,color:C.paper,borderRadius:4,padding:"12px 22px",fontFamily:"'JetBrains Mono',monospace",fontSize:12,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>
-            {t("pContactUs",lang)}
-          </button>
-        </div>
       </div>
 
       {/* Fleet gallery */}
@@ -1375,6 +1454,7 @@ function PublicLanding({db,updateDB,onLogin}){
         <div style={h2}>{t("pGetInTouch",lang)}</div>
         <div style={h2sub}>{t("pContactSub",lang)}</div>
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          <button onClick={()=>setApplyFor("")} style={{...s.btnGold,width:"100%",padding:"14px"}}>{t("pApplyRent",lang)}</button>
           <a href={`tel:${OWNER_PHONE}`} style={{...contactBtnStyle}}>
             <Icon d={ICONS.contact} size={16} color={C.gold}/> <span>{t("pCall",lang)} {OWNER_PHONE}</span>
           </a>
@@ -2457,8 +2537,12 @@ function AdminApp({db,updateDB,onLogout,refreshNow}){
 /* ── Admin Dashboard ─────────────────────────────────────── */
 
 function AdminDashboard({db,updateDB,setTab,lang}){
-  const totalPaid=db.payments.filter(p=>p.status==="paid").reduce((s,p)=>s+p.amount,0);
+  const activeTenants=db.tenants.filter(t=>!t.archived);
+  const [year,setYear]=useState(new Date().getFullYear());
+  const yearsAvail=Array.from(new Set([new Date().getFullYear(),...db.payments.map(p=>Number((p.date||"").slice(0,4))).filter(Boolean)])).sort((a,b)=>b-a);
+  const paidThisYear=db.payments.filter(p=>p.status==="paid"&&(p.date||"").slice(0,4)===String(year)).reduce((s,p)=>s+p.amount,0);
   const pending=db.payments.filter(p=>p.status==="pending");
+  const availCount=db.trailers.filter(t=>!t.archived&&isOpen(t.status)).length;
   const maintPending=(db.maintenanceRequests||[]).filter(r=>r.status==="pending"||r.status==="in-progress");
   const transPending=(db.transportRequests||[]).filter(r=>r.status==="pending");
   const bookPending=(db.bookingRequests||[]).filter(r=>r.status==="pending");
@@ -2466,35 +2550,48 @@ function AdminDashboard({db,updateDB,setTab,lang}){
   return(
     <div style={{display:"flex",flexDirection:"column",gap:14}} className="fadein">
       <div style={{...s.heading,fontSize:22,fontWeight:700}}>{t("overview",lang)}</div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-        <StatCard val={db.tenants.length} label={t("tenants",lang)}/>
-        <StatCard val={fmt$(totalPaid)} label={t("totalCollected",lang)}/>
-        <StatCard val={pending.length} label={t("pendingPayments",lang)} warn={pending.length>0}/>
-        <StatCard val={db.trailers.filter(t=>t.status==="available").length} label={t("availableTrailers",lang)}/>
+
+      {/* year selector — income resets each calendar year */}
+      <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+        <span style={{fontSize:11,color:C.chromeDim,...s.mono}}>Year:</span>
+        {yearsAvail.map(y=>(
+          <button key={y} onClick={()=>setYear(y)}
+            style={{padding:"5px 12px",borderRadius:99,border:`1px solid ${year===y?C.gold:C.line}`,background:year===y?C.gold+"22":"transparent",color:year===y?C.gold:C.chromeDim,fontSize:11,...s.mono,cursor:"pointer"}}>{y}</button>
+        ))}
       </div>
 
-      {/* lease progress per tenant */}
-      {db.tenants.length>0&&(
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+        <StatCard val={activeTenants.length} label={t("tenants",lang)}/>
+        <StatCard val={fmt$(paidThisYear)} label={`Collected in ${year}`}/>
+        <StatCard val={pending.length} label={t("pendingPayments",lang)} warn={pending.length>0}/>
+        <StatCard val={availCount} label={t("availableTrailers",lang)}/>
+      </div>
+
+      {/* lease progress per tenant — actual paid vs remaining, reacts to payments */}
+      {activeTenants.length>0&&(
         <>
           <div style={{...s.heading,fontSize:11,color:C.chromeDim,marginTop:4}}>{t("leaseProgress",lang)}</div>
-          {db.tenants.map(t=>{
+          {activeTenants.map(t=>{
             const lm=leaseMonths(t, db.payments);
-            if(lm.total===0) return null;
-            const pct=Math.min(100,Math.round(lm.paid/lm.total*100));
             const paidTotal=db.payments.filter(p=>p.tenantId===t.id&&p.status==="paid").reduce((s,p)=>s+p.amount,0);
+            const totalValue=lm.total>0?(Number(t.monthlyRate)||0)*lm.total:0;
+            const remainingVal=totalValue>0?Math.max(0,totalValue-paidTotal):0;
+            const pct=totalValue>0?Math.min(100,Math.round(paidTotal/totalValue*100)):0;
             const creditBuilt=Math.round(paidTotal*(t.creditRate||0)/100);
             return(
               <div key={t.id} style={{...s.card}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:8}}>
                   <div style={{fontSize:13,fontWeight:600}}>{t.name}</div>
-                  <div style={{fontSize:12,...s.mono,color:C.gold}}>{lm.paid} / {lm.total} months</div>
+                  <div style={{fontSize:12,...s.mono,color:C.gold}}>{lm.total>0?`${lm.paid} / ${lm.total} mo`:`${fmt$(t.monthlyRate||0)}/mo`}</div>
                 </div>
-                <div style={{background:C.ink2,borderRadius:4,height:8,overflow:"hidden",border:`1px solid ${C.line}`}}>
-                  <div style={{width:pct+"%",height:"100%",background:`linear-gradient(90deg,${C.gold},${C.goldBright})`,borderRadius:4,transition:"width 0.4s ease"}}/>
-                </div>
-                <div style={{display:"flex",justifyContent:"space-between",marginTop:6,fontSize:11,...s.mono,color:C.chromeDim}}>
-                  <span>{fmt$((t.monthlyRate||0)*lm.paid)} collected</span>
-                  <span>{lm.remaining} months left · {fmt$((t.monthlyRate||0)*lm.remaining)} to go</span>
+                {totalValue>0&&(
+                  <div style={{background:C.ink2,borderRadius:4,height:8,overflow:"hidden",border:`1px solid ${C.line}`}}>
+                    <div style={{width:pct+"%",height:"100%",background:`linear-gradient(90deg,${C.gold},${C.goldBright})`,borderRadius:4,transition:"width 0.4s ease"}}/>
+                  </div>
+                )}
+                <div style={{display:"flex",justifyContent:"space-between",marginTop:6,fontSize:11,...s.mono}}>
+                  <span style={{color:C.good}}>{fmt$(paidTotal)} paid</span>
+                  {totalValue>0&&<span style={{color:C.chromeDim}}>{fmt$(remainingVal)} remaining</span>}
                 </div>
                 {t.creditRate>0&&(
                   <div style={{display:"flex",justifyContent:"space-between",marginTop:6,paddingTop:6,borderTop:`1px solid ${C.line}`,fontSize:11,...s.mono}}>
@@ -3376,6 +3473,7 @@ function AdminAccounting({db,updateDB,lang}){
 function AdminPayments({db,updateDB,lang}){
   const [form,setForm]=useState({tenantId:"",amount:"",date:today(),method:"Zelle",status:"paid",note:""});
   const [adding,setAdding]=useState(false);
+  const [leaseFor,setLeaseFor]=useState(null); // tenant whose lease is open
 
   const addPayment=()=>{
     if(!form.tenantId||!form.amount)return;
@@ -3403,6 +3501,12 @@ function AdminPayments({db,updateDB,lang}){
   const deletePayment=(id)=>updateDB(db=>{db.payments=db.payments.filter(p=>p.id!==id);return db;});
 
   const all=[...db.payments].sort((a,b)=>b.date.localeCompare(a.date));
+
+  if(leaseFor){
+    const ltr=db.trailers.find(x=>x.id===leaseFor.trailerId)||{};
+    const doPrintLease=()=>{document.body.classList.add("printing-petition");const cl=()=>{document.body.classList.remove("printing-petition");window.removeEventListener("afterprint",cl);};window.addEventListener("afterprint",cl);window.print();setTimeout(cl,1200);};
+    return <LeaseContract tenant={leaseFor} trailer={ltr} termType={leaseFor.termType||"monthly"} signed={leaseFor.signature} onClose={()=>setLeaseFor(null)} onPrint={doPrintLease}/>;
+  }
 
   return(
     <div style={{display:"flex",flexDirection:"column",gap:12}} className="fadein">
@@ -3452,8 +3556,12 @@ function AdminPayments({db,updateDB,lang}){
         return(
           <div key={p.id} style={{...s.card,display:"flex",gap:10,alignItems:"center"}}>
             <div style={{flex:1}}>
-              <div style={{fontSize:13,fontWeight:500}}>{t?.name||"Unknown"}</div>
+              <div style={{fontSize:13,fontWeight:500}}>{t?.name||"Unknown"}{t?.archived?<span style={{fontSize:10,color:C.chromeDim}}> · archived</span>:null}</div>
               <div style={{fontSize:11,color:C.chromeDim}}>{p.note||"Payment"} · {fmtDate(p.date)} · {p.method}</div>
+              {t&&<button onClick={()=>setLeaseFor(t)} title="Download this tenant's contract"
+                style={{marginTop:5,display:"inline-flex",alignItems:"center",gap:4,background:"none",border:`1px solid ${C.gold}`,color:C.gold,borderRadius:4,padding:"3px 9px",fontSize:10.5,fontWeight:700,...s.mono,cursor:"pointer"}}>
+                <Icon d={ICONS.download} size={12} color={C.gold}/> contract
+              </button>}
             </div>
             <div style={{textAlign:"right",flexShrink:0}}>
               <div style={{fontSize:14,...s.mono,color:C.gold}}>{fmt$(p.amount)}</div>
@@ -4466,6 +4574,17 @@ function AdminFleet({db,updateDB,lang}){
     updateDB(db=>{const t=db.trailers.find(x=>x.id===id); if(t){ t.photos=photos; t.photo=photos[0]||null; t.photoCount=photos.length; t.photoNames=names; } return db;});
     photoCache[id]={key:id+":"+photos.length+":"+names.join("|"),photos};
   };
+  // Reorder photos: dir -1 moves earlier (toward cover), +1 moves later. Index 0 = cover shown to the public.
+  const movePhoto=async(id,index,dir)=>{
+    const t=db.trailers.find(x=>x.id===id); if(!t) return;
+    const photos=[...(t.photos||[])]; const names=[...(t.photoNames||[])];
+    const j=index+dir; if(j<0||j>=photos.length) return;
+    [photos[index],photos[j]]=[photos[j],photos[index]];
+    [names[index],names[j]]=[names[j],names[index]];
+    for(let i=0;i<photos.length;i++){ await saveFileChunked("trailer_photo:"+id+":"+i, photos[i]); }
+    updateDB(db=>{const t=db.trailers.find(x=>x.id===id); if(t){ t.photos=photos; t.photo=photos[0]||null; t.photoCount=photos.length; t.photoNames=names; } return db;});
+    photoCache[id]={key:id+":"+photos.length+":"+names.join("|"),photos};
+  };
 
   const setStatus=(id,status)=>updateDB(db=>{const t=db.trailers.find(x=>x.id===id);if(t)t.status=status;return db;});
   const archiveTrailer=(id,on)=>updateDB(db=>{const t=db.trailers.find(x=>x.id===id);if(t){t.archived=on;if(on)t.status="sold";}return db;});
@@ -4477,7 +4596,7 @@ function AdminFleet({db,updateDB,lang}){
     ["rent","Available for rent only",C.good],
     ["sale","Available for sale only",C.blue],
     ["rent-sale","Available for rent or sale",C.gold],
-    ["rented","Not Available",C.chromeDim],
+    ["rented","Not Available","#ff3b30"],
     ["sold","Sold",C.danger],
   ];
   const statusMeta=(st)=>STATUS_OPTIONS.find(([v])=>v===st)||STATUS_OPTIONS[0];
@@ -4619,16 +4738,22 @@ function AdminFleet({db,updateDB,lang}){
                 </div>
               )}
 
-              {(t.photos||[]).length>0&&(
-                <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:10}}>
+              {(t.photos||[]).length>0&&(<>
+                <div style={{fontSize:10,color:C.chromeDim,marginTop:10,...s.mono}}>Photo order — #1 is the cover shown to the public. Use ◀ ▶ to reorder.</div>
+                <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:6}}>
                   {t.photos.map((p,i)=>(
-                    <div key={i} style={{position:"relative"}}>
-                      <img src={p} alt="" style={{width:56,height:56,borderRadius:5,objectFit:"cover",border:`1px solid ${C.line}`}}/>
-                      <button onClick={()=>removeTrailerPhoto(t.id,i)} style={{position:"absolute",top:-6,right:-6,background:C.danger,border:"none",borderRadius:99,width:18,height:18,color:"#fff",fontSize:11,cursor:"pointer",lineHeight:1}}>×</button>
+                    <div key={i} style={{position:"relative",width:66}}>
+                      <img src={p} alt="" style={{width:66,height:58,borderRadius:5,objectFit:"cover",border:`2px solid ${i===0?C.gold:C.line}`}}/>
+                      <span style={{position:"absolute",top:-6,left:-6,background:i===0?C.gold:C.steel2,color:i===0?C.ink:C.paper,border:`1px solid ${C.lineBright}`,borderRadius:99,minWidth:16,height:16,fontSize:10,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 3px"}}>{i===0?"★1":i+1}</span>
+                      <button onClick={()=>removeTrailerPhoto(t.id,i)} style={{position:"absolute",top:-6,right:-6,background:C.danger,border:"none",borderRadius:99,width:16,height:16,color:"#fff",fontSize:10,cursor:"pointer",lineHeight:1}}>×</button>
+                      <div style={{display:"flex",gap:2,marginTop:2}}>
+                        <button onClick={()=>movePhoto(t.id,i,-1)} disabled={i===0} style={{flex:1,background:C.steel2,border:`1px solid ${C.line}`,color:i===0?C.line:C.gold,borderRadius:3,fontSize:11,cursor:i===0?"default":"pointer",padding:"1px 0"}}>◀</button>
+                        <button onClick={()=>movePhoto(t.id,i,1)} disabled={i===t.photos.length-1} style={{flex:1,background:C.steel2,border:`1px solid ${C.line}`,color:i===t.photos.length-1?C.line:C.gold,borderRadius:3,fontSize:11,cursor:i===t.photos.length-1?"default":"pointer",padding:"1px 0"}}>▶</button>
+                      </div>
                     </div>
                   ))}
                 </div>
-              )}
+              </>)}
               <input type="file" accept="image/*" multiple style={{display:"none"}} ref={inlinePhotoRef} onChange={e=>addTrailerPhotos(t.id,e.target.files)}/>
               <button onClick={()=>inlinePhotoRef.current?.click()} disabled={busyPhoto===t.id} style={{...s.btnOut,width:"100%",marginTop:10,display:"flex",alignItems:"center",justifyContent:"center",gap:6,padding:"8px"}}>
                 <Icon d={ICONS.img} size={13} color={C.gold}/> <span style={{fontSize:10}}>{busyPhoto===t.id?"Processing…":"Add Photos"}</span>

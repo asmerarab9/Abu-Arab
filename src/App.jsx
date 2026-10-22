@@ -678,6 +678,8 @@ function currentStage(diff){
 }
 
 async function runReminders(db,updateDB){
+  return 0; // Automatic rent reminders/demands are DISABLED. Admin can still send a reminder manually per tenant.
+  // eslint-disable-next-line no-unreachable
   const ref=new Date(); ref.setHours(0,0,0,0);
   const toLog=[]; // {tenantId, key, stageLabel, name}
   (db.tenants||[]).forEach(t=>{
@@ -883,6 +885,18 @@ export default function App(){
       return next;
     });
   };
+
+  // One-time global purge: wipe ALL existing rent reminder / late / demand notices
+  // for every tenant (paid, unpaid, archived — everyone). Runs once per database.
+  useEffect(()=>{
+    if(!db || db.reminderPurgeV2) return;
+    const hasAny=(db.notifications||[]).some(n=>RENT_NOTICE_TITLES.includes(n.title));
+    updateDB(d=>{
+      if(hasAny) d.notifications=(d.notifications||[]).filter(n=>!RENT_NOTICE_TITLES.includes(n.title));
+      d.reminderPurgeV2=true;
+      return d;
+    });
+  },[db]);
 
   let content;
   if(!db) content=(
@@ -2348,20 +2362,8 @@ function AdminApp({db,updateDB,onLogout,refreshNow}){
     if("Notification" in window && Notification.permission==="default"){
       Notification.requestPermission();
     }
-    // One-time cleanup: remove any lingering rent reminder / demand notices for tenants
-    // who are archived (broke/ended lease) or already paid for the current cycle.
-    updateDB(d=>{
-      const ref=new Date(); ref.setHours(0,0,0,0);
-      (d.tenants||[]).forEach(t=>{
-        if(t.archived){ clearRentNotices(d,t.id); return; }
-        const due=currentDueDate(t,ref);
-        if(isPaidForMonth(d,t.id,due)) clearRentNotices(d,t.id);
-      });
-      return d;
-    });
-    // Payment reminders / escalation — runs once when the admin opens the app.
-    // (No server cron in this setup; see notes. Deduped so it never double-sends.)
-    runReminders(db,updateDB);
+    // Automatic rent reminders are disabled; the global one-time purge (in App root)
+    // removes any lingering rent/demand notices for all tenants.
   },[]);
   useEffect(()=>{
     if(unreadNotifs.length>prevUnreadCount.current){

@@ -594,6 +594,11 @@ async function sendEmail(toEmail, toName, subject, message){
   }catch(err){ console.error("Email send failed:",err); }
 }
 
+// Titles used by the automatic rent escalation — cleared when a tenant pays or is archived.
+const RENT_NOTICE_TITLES=["Rent Reminder","Late Rent Notice","Notice of Default"];
+function clearRentNotices(db,tenantId){
+  db.notifications=(db.notifications||[]).filter(n=>!(n.forTenantId===tenantId && RENT_NOTICE_TITLES.includes(n.title)));
+}
 function addNotification(db,{forRole,title,body,link,forTenantId}){
   const n={id:"N"+uid(),forRole,title,body,link,forTenantId,date:today(),read:false};
   db.notifications=[...db.notifications,n];
@@ -633,7 +638,14 @@ function currentDueDate(tenant,ref){
 }
 function isPaidForMonth(db,tenantId,dueDate){
   const ym=`${dueDate.getFullYear()}-${String(dueDate.getMonth()+1).padStart(2,"0")}`;
-  return (db.payments||[]).some(p=>p.tenantId===tenantId && p.status==="paid" && (p.date||"").slice(0,7)===ym);
+  const cycleStart=new Date(dueDate); cycleStart.setDate(dueDate.getDate()-5);
+  const cycleEnd=new Date(dueDate.getFullYear(),dueDate.getMonth()+1,dueDate.getDate());
+  return (db.payments||[]).some(p=>{
+    if(p.tenantId!==tenantId || p.status!=="paid") return false;
+    if((p.date||"").slice(0,7)===ym) return true;      // paid in the same calendar month
+    const d=parseYMD(p.date);                           // or paid within this rent cycle
+    return d && d>=cycleStart && d<cycleEnd;
+  });
 }
 function reminderMessage(stage,{name,amount,trailerName,dueStr,overdue,lateFee}){
   const amt=fmt$(amount||0);
@@ -670,6 +682,9 @@ async function runReminders(db,updateDB){
   const toLog=[]; // {tenantId, key, stageLabel, name}
   (db.tenants||[]).forEach(t=>{
     if(!t.trailerId || !t.monthlyRate) return; // only active, billed tenants
+    if(t.archived) return;                      // broke/ended lease → never remind
+    const endD=parseYMD(t.endDate);
+    if(endD && endD<ref) return;                // lease already ended
     const due=currentDueDate(t,ref);
     if(isPaidForMonth(db,t.id,due)) return;
     const diff=daysDiff(ref,due);
@@ -2324,6 +2339,17 @@ function AdminApp({db,updateDB,onLogout,refreshNow}){
     if("Notification" in window && Notification.permission==="default"){
       Notification.requestPermission();
     }
+    // One-time cleanup: remove any lingering rent reminder / demand notices for tenants
+    // who are archived (broke/ended lease) or already paid for the current cycle.
+    updateDB(d=>{
+      const ref=new Date(); ref.setHours(0,0,0,0);
+      (d.tenants||[]).forEach(t=>{
+        if(t.archived){ clearRentNotices(d,t.id); return; }
+        const due=currentDueDate(t,ref);
+        if(isPaidForMonth(d,t.id,due)) clearRentNotices(d,t.id);
+      });
+      return d;
+    });
     // Payment reminders / escalation — runs once when the admin opens the app.
     // (No server cron in this setup; see notes. Deduped so it never double-sends.)
     runReminders(db,updateDB);
@@ -2670,7 +2696,7 @@ function AdminTenants({db,updateDB,lang}){
   const archiveTenant=(id,on,reason)=>{
     updateDB(db=>{
       const t=db.tenants.find(x=>x.id===id);
-      if(t){ t.archived=on; if(on){ t.archiveReason=reason||"completed"; t.archivedDate=today(); if(t.trailerId){const tr=db.trailers.find(x=>x.id===t.trailerId); if(tr&&!tr.archived) tr.status="rent-sale";} } }
+      if(t){ t.archived=on; if(on){ t.archiveReason=reason||"completed"; t.archivedDate=today(); clearRentNotices(db,id); if(t.trailerId){const tr=db.trailers.find(x=>x.id===t.trailerId); if(tr&&!tr.archived) tr.status="rent-sale";} } }
       return db;
     });
     setView("list");
@@ -3357,6 +3383,7 @@ function AdminPayments({db,updateDB,lang}){
     updateDB(db=>{
       db.payments=[...db.payments,p];
       if(p.status==="paid"){
+        clearRentNotices(db,p.tenantId); // remove any outstanding rent reminder / demand notices
         addNotification(db,{forRole:"tenant",forTenantId:p.tenantId,title:"Payment Confirmed",body:`Abu Arab confirmed your ${p.note||"payment"} of ${fmt$(p.amount)} as received.`});
       }
       return db;
@@ -3368,6 +3395,7 @@ function AdminPayments({db,updateDB,lang}){
     const p=db.payments.find(x=>x.id===id);
     if(p){
       p.status="paid";
+      clearRentNotices(db,p.tenantId); // remove any outstanding rent reminder / demand notices
       addNotification(db,{forRole:"tenant",forTenantId:p.tenantId,title:"Payment Confirmed ✓",body:`Your ${p.note||"payment"} of ${fmt$(p.amount)} has been confirmed.`});
     }
     return db;

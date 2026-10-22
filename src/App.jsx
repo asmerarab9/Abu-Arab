@@ -594,10 +594,10 @@ async function sendEmail(toEmail, toName, subject, message){
   }catch(err){ console.error("Email send failed:",err); }
 }
 
-// Titles used by the automatic rent escalation — cleared when a tenant pays or is archived.
-const RENT_NOTICE_TITLES=["Rent Reminder","Late Rent Notice","Notice of Default"];
+// Any notification produced by the (now disabled) automatic rent escalation.
+const isRentNotice=(title)=>/rent reminder|late rent|notice of default|reminder sent|demand for payment|demand/i.test(String(title||""));
 function clearRentNotices(db,tenantId){
-  db.notifications=(db.notifications||[]).filter(n=>!(n.forTenantId===tenantId && RENT_NOTICE_TITLES.includes(n.title)));
+  db.notifications=(db.notifications||[]).filter(n=>!(n.forTenantId===tenantId && isRentNotice(n.title)));
 }
 function addNotification(db,{forRole,title,body,link,forTenantId}){
   const n={id:"N"+uid(),forRole,title,body,link,forTenantId,date:today(),read:false};
@@ -889,11 +889,11 @@ export default function App(){
   // One-time global purge: wipe ALL existing rent reminder / late / demand notices
   // for every tenant (paid, unpaid, archived — everyone). Runs once per database.
   useEffect(()=>{
-    if(!db || db.reminderPurgeV2) return;
-    const hasAny=(db.notifications||[]).some(n=>RENT_NOTICE_TITLES.includes(n.title));
+    if(!db || db.reminderPurgeV3) return;
+    const hasAny=(db.notifications||[]).some(n=>isRentNotice(n.title));
     updateDB(d=>{
-      if(hasAny) d.notifications=(d.notifications||[]).filter(n=>!RENT_NOTICE_TITLES.includes(n.title));
-      d.reminderPurgeV2=true;
+      if(hasAny) d.notifications=(d.notifications||[]).filter(n=>!isRentNotice(n.title));
+      d.reminderPurgeV3=true;
       return d;
     });
   },[db]);
@@ -1201,10 +1201,10 @@ function PublicTrailerDetail({trailer,onBack,onInquire,onApply,onView}){
                 <span style={{...s.mono,fontSize:22,color:C.gold,fontWeight:600}}>{fmt$(base)}</span>
               </div>
             )}
-            {rentable&&(trailer.dailyRate||trailer.monthlyRate)&&(
+            {rentable&&trailer.monthlyRate&&(
               <div style={{display:"flex",gap:14,marginTop:(isForSale(trailer.status)&&base>0)?10:0,flexWrap:"wrap"}}>
-                {trailer.dailyRate?<span style={{...s.mono,fontSize:12.5,color:C.paperDim}}>Rent {fmt$(trailer.dailyRate)}/day</span>:null}
-                {trailer.monthlyRate?<span style={{...s.mono,fontSize:12.5,color:C.paperDim}}>· {fmt$(trailer.monthlyRate)}/month</span>:null}
+                <span style={{...s.mono,fontSize:13,color:C.gold}}>{fmt$(trailer.weeklyRate||Math.round(trailer.monthlyRate/2))}/week</span>
+                <span style={{...s.mono,fontSize:13,color:C.gold}}>· {fmt$(trailer.monthlyRate)}/month</span>
               </div>
             )}
           </div>
@@ -1354,7 +1354,7 @@ function PublicLanding({db,updateDB,onLogin}){
                   </div>
                   {open&&(
                     <div style={{display:"flex",gap:14,flexWrap:"wrap",alignItems:"baseline",marginBottom:14}}>
-                      {rentable&&tr.dailyRate?<Price big={fmt$(tr.dailyRate)} small="/day"/>:null}
+                      {rentable&&tr.monthlyRate?<Price big={fmt$(tr.weeklyRate||Math.round(tr.monthlyRate/2))} small="/week"/>:null}
                       {rentable&&tr.monthlyRate?<Price big={fmt$(tr.monthlyRate)} small="/month"/>:null}
                       {isForSale(tr.status)&&tr.purchasePrice?<Price big={fmt$(tr.purchasePrice)} small="to buy"/>:null}
                     </div>
@@ -1389,6 +1389,15 @@ function PublicLanding({db,updateDB,onLogin}){
               </div>
             </div>
           ))}
+          <div style={{display:"flex",gap:13,alignItems:"center",background:C.gold+"10",border:`1px dashed ${C.gold}66`,borderRadius:8,padding:"14px 15px"}}>
+            <div style={{flexShrink:0,width:38,height:38,borderRadius:8,background:C.gold+"18",border:`1px solid ${C.gold}33`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <Icon d={ICONS.contact} size={19} color={C.gold}/>
+            </div>
+            <div>
+              <div style={{fontWeight:600,fontSize:14,color:C.paper,marginBottom:3}}>Trailer Locations <span style={{...s.mono,fontSize:10,color:C.gold}}>· COMING SOON</span></div>
+              <div style={{fontSize:12,color:C.chromeDim,lineHeight:1.5}}>Ready-to-operate trailer spots and a points &amp; rewards program for our tenants — launching soon.</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -3431,7 +3440,8 @@ function AdminPayments({db,updateDB,lang}){
   });
   const deletePayment=(id)=>updateDB(db=>{db.payments=db.payments.filter(p=>p.id!==id);return db;});
 
-  const all=[...db.payments].sort((a,b)=>b.date.localeCompare(a.date));
+  const archivedIds=new Set((db.tenants||[]).filter(t=>t.archived).map(t=>t.id));
+  const all=[...db.payments].filter(p=>!archivedIds.has(p.tenantId)).sort((a,b)=>b.date.localeCompare(a.date));
 
   if(leaseFor){
     const ltr=db.trailers.find(x=>x.id===leaseFor.trailerId)||{};
